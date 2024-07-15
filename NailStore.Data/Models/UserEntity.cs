@@ -7,11 +7,11 @@ public class UserEntity : IdentityUser
     /// <summary>
     /// Имя пользователя
     /// </summary>
-    public string FirstName { get; set; }
+    public string? FirstName { get; set; }
     /// <summary>
     /// Фамилия пользователя
     /// </summary>
-    public string LastName { get; set; }
+    public string? LastName { get; set; }
     /// <summary>
     /// Дата регистрации пользователя
     /// </summary>

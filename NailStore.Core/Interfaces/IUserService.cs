@@ -11,15 +11,26 @@ public interface IUserService
     /// <param name="userName">Никнейм пользователя</param>
     /// <param name="email">Email пользовтаеля</param>
     /// <param name="password">Пароль пользователя</param>
-    /// <returns>Возвращает кортеж, где "Result" - сообщение о результате операции и "Validator" - объект содержащий код выполнения операции и сообщение об ошибке, если таковая есть</returns>
+    /// <returns>Возвращает объект ответа</returns>
     Task<ResponseModelCore> RegisterUserAsync(string url, string userName, string email, string password);
+    /// <summary>
+    /// Аутентификация пользователя по Email и паролю
+    /// </summary>
+    /// <param name="email">Email пользователя</param>
+    /// <param name="password">Пароль пользователя</param>
+    /// <returns>Возвращает объект ответа</returns>
     Task<ResponseModelCore> LoginUserAsync(string email, string password);
+    /// <summary>
+    /// Получить пользователя по его идентификатору
+    /// </summary>
+    /// <param name="id">Идентификатор пользователя</param>
+    /// <returns>Возвращает объект ответа</returns>
     Task<ResponseModelCore> GetUserByIdAsync(string id);
     /// <summary>
     ///  Подтверждение Email пользователя
     /// </summary>
     /// <param name="userConfirmited">модель подтверждения Email</param>
-    /// <returns></returns>
+    /// <returns>Возвращает объект ответа</returns>
     Task<ResponseModelCore> ConfirmedEmailUser(UserConfirmitedEmail userConfirmited);
     /// <summary>
     /// Проверяет свободно ли имя пользователя
@@ -27,4 +38,19 @@ public interface IUserService
     /// <param name="username">Имя пользователя</param>
     /// <returns>Вернет <b>true</b>, если имя свободно и <b>false</b>, если не свободно</returns>
     Task<bool> UserNameIsFreeAsync(string username);
+    /// <summary>
+    /// Отправить инструкции на почту по восстановлению пароля
+    /// </summary>
+    /// <param name="email">Почта пользователя</param>
+    /// <param name="url">URL для формирования колбэк ссылки</param>
+    /// <returns></returns>
+    Task<ResponseModelCore> RecoveryPasswordSend(string email, string url);
+    /// <summary>
+    /// Сменить пароль на новый
+    /// </summary>
+    /// <param name="userId">Идентификатор пользователя</param>
+    /// <param name="inputСode">Токен подтверждения смены пароля</param>
+    /// <param name="newPass">Новый пароль</param>
+    /// <returns>Возвращает объект ответа</returns>
+    Task<ResponseModelCore> RecoveryPassword(string userId, string inputСode, string newPass);
 }

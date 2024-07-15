@@ -12,6 +12,7 @@ using Serilog;
 using System.Reflection;
 using System.Text;
 using NailStore.Application.Settings;
+using NailStore.Repositories;
 
 namespace NailStore.Web.API.ConfigureServices
 {
@@ -43,7 +44,7 @@ namespace NailStore.Web.API.ConfigureServices
         {
             services
                 .AddScoped<IUserService, UserService>()
-                //.AddScoped<IUserRepository, UserRepository>()
+                .AddScoped<IUserRepository, UserRepository>()
                 .AddScoped<IJWTManager, JWTManager>()
                 .AddScoped<IEmailService, EmailService>()
                 ;
