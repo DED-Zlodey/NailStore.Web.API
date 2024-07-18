@@ -15,7 +15,7 @@ public interface IUserRepository
     /// </summary>
     /// <param name="id">Идентификатор пользователя</param>
     /// <returns>Возвращает модель ответа</returns>
-    Task<ResponseModelCore> GetUserByIdAsync(string id);
+    Task<ResponseModelCore> GetUserByIdAsync(Guid id);
     /// <summary>
     /// Получить пользователя по его Email
     /// </summary>

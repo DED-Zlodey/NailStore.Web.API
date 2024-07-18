@@ -25,7 +25,7 @@ public interface IUserService
     /// </summary>
     /// <param name="id">Идентификатор пользователя</param>
     /// <returns>Возвращает объект ответа</returns>
-    Task<ResponseModelCore> GetUserByIdAsync(string id);
+    Task<ResponseModelCore> GetUserByIdAsync(Guid id);
     /// <summary>
     ///  Подтверждение Email пользователя
     /// </summary>
@@ -53,4 +53,17 @@ public interface IUserService
     /// <param name="newPass">Новый пароль</param>
     /// <returns>Возвращает объект ответа</returns>
     Task<ResponseModelCore> RecoveryPassword(string userId, string inputСode, string newPass);
+    /// <summary>
+    /// Получить роли пользователя
+    /// </summary>
+    /// <param name="userId">Идентификтор пользователя</param>
+    /// <returns>Верент список ролей пользователя</returns>
+    Task<string[]> GetUserRolesAsync(string userId);
+    /// <summary>
+    /// Имеются ли роли у пользователя?
+    /// </summary>
+    /// <param name="userId">Идентификатор пользователя</param>
+    /// <param name="inputRoles">Роли которые проверяются</param>
+    /// <returns>Верент <b>true</b>,  если роли у пользователя имеются и <b>false</b>, если ни одной роли пользователь не имеет</returns>
+    Task<bool> IsRolesAllowedAsync(string userId, List<string> inputRoles);
 }

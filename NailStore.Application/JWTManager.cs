@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NailStore.Application.Settings;
 using NailStore.Core.Interfaces;
+using NailStore.Data.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -13,10 +14,12 @@ namespace NailStore.Application;
 public class JWTManager : IJWTManager
 {
     private readonly ILogger<JWTManager> _logger;
+    private readonly UserManager<UserEntity> _userManager;
     private readonly SrvSettings _settings;
-    public JWTManager(ILogger<JWTManager> logger, IOptions<SrvSettings> srvSettings)
+    public JWTManager(ILogger<JWTManager> logger, IOptions<SrvSettings> srvSettings, UserManager<UserEntity> userManager)
     {
         _logger = logger;
+        _userManager = userManager;
         _settings = srvSettings.Value;
     }
     public ClaimsPrincipal GetPrincipal(string token)
@@ -43,8 +46,8 @@ public class JWTManager : IJWTManager
                 IssuerSigningKey = GetSymmetricSecurityKey(_settings.ServerKey!),
                 ValidateIssuerSigningKey = true,
                 LifetimeValidator = LifetimeValidator,
-                ValidIssuer = "Master-Guard",
-                ValidAudience = "companyGuard"
+                ValidIssuer = "NailStoreApi",
+                ValidAudience = "NailStore.Company"
             };
             SecurityToken securityToken;
             var principal = tokenHandler.ValidateToken(token, validationParameters, out securityToken);
@@ -97,26 +100,30 @@ public class JWTManager : IJWTManager
     /// </summary>
     /// <param name="user"></param>
     /// <returns>Возвращает мастер-токен</returns>
-    public string GetBearerToken(IdentityUser user)
+    public async Task<string> GetBearerTokenAsync(UserEntity user)
     {
-        var identity = GetIdentityCaimsAsync(user);
-        var now = DateTime.Now.ToUniversalTime();
+        var identity = await GetIdentityCaimsAsync(user);
+        var now = DateTime.Now;
         var jwt = new JwtSecurityToken(
-                issuer: "Master-Guard",
-                audience: "companyGuard",
+                issuer: "NailStoreApi",
+                audience: "NailStore.Company",
                 notBefore: now,
                 claims: identity.Claims,
                 expires: now.Add(TimeSpan.FromMinutes(1440)),
                 signingCredentials: new SigningCredentials(GetSymmetricSecurityKey(_settings.ServerKey!), SecurityAlgorithms.HmacSha256));
         return new JwtSecurityTokenHandler().WriteToken(jwt);
     }
-    private ClaimsIdentity GetIdentityCaimsAsync(IdentityUser user)
+    private async Task<ClaimsIdentity> GetIdentityCaimsAsync(UserEntity user)
     {
+        var userRoles = await _userManager.GetRolesAsync(user);
         var claims = new List<Claim>
-                {
-                    new Claim("Id", user.Id),
-                    new Claim("Roles", "User")
-                };
+        { 
+            new Claim("Id", user.Id.ToString()), 
+        };
+        foreach (var role in userRoles)
+        {
+            claims.Add(new Claim("Role", role));
+        }
         ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Token");
         return claimsIdentity;
     }

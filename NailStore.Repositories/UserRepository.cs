@@ -50,7 +50,7 @@ public class UserRepository : IUserRepository
             }
         };
     }
-    public async Task<ResponseModelCore> GetUserByIdAsync(string id)
+    public async Task<ResponseModelCore> GetUserByIdAsync(Guid id)
     {
         var user = await _context.Users.Select(x => new { x.Id, x.UserName, x.PhoneNumber, x.Enable, x.RegisterAt }).AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         if (user == null)
@@ -89,10 +89,10 @@ public class UserRepository : IUserRepository
     /// <returns>Вернет <b>true</b>, если имя свободно и <b>false</b>, если не свободно</returns>
     public async Task<bool> UserNameIsFreeAsync(string username)
     {
-        var user = await _context.Users.Select(x => new IdentityUser
+        var user = await _context.Users.Select(x => new IdentityUser<Guid>
         {
             UserName = x.UserName,
-            Id = x.Id
+            Id = x.Id,
         }).FirstOrDefaultAsync(x => x.UserName == username);
         if (user == null)
         {

@@ -6,24 +6,24 @@ using System.Text;
 
 namespace NailStore.Web.API;
 
-public class AppInit
+public struct AppInit
 {
     /// <summary>
     /// Инициализация БД начальными данными
     /// </summary>
     /// <param name="service">Сервис-провайдер</param>
     /// <returns></returns>
-    public static async Task InitializeAsync(IServiceProvider service)
+    public async Task InitializeAsync(IServiceProvider service)
     {
         var _logger = service.GetRequiredService<ILogger<AppInit>>();
         var settings = service.GetService<IOptions<SrvSettings>>()!.Value;
-        var roleManager = service.GetRequiredService<RoleManager<IdentityRole>>();
+        var roleManager = service.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
         var userManager = service.GetRequiredService<UserManager<UserEntity>>();
         if (ValidationSectionAdmin(settings))
         {
             if (await roleManager.FindByNameAsync("Admin") == null)
             {
-                var res = await roleManager.CreateAsync(new IdentityRole("Admin"));
+                var res = await roleManager.CreateAsync(new IdentityRole<Guid>("Admin"));
                 if (res.Succeeded)
                 {
                     _logger.LogInformation("{InitializeAsync}: Создана роль администратора: \"Admin\"", nameof(InitializeAsync));
@@ -35,10 +35,22 @@ public class AppInit
             }
             if (await roleManager.FindByNameAsync("User") == null)
             {
-                var res = await roleManager.CreateAsync(new IdentityRole("User"));
+                var res = await roleManager.CreateAsync(new IdentityRole<Guid>("User"));
                 if (res.Succeeded)
                 {
                     _logger.LogInformation("{InitializeAsync}: Создана роль пользователя: \"User\"", nameof(InitializeAsync));
+                }
+                else
+                {
+                    _logger.LogError("{InitializeAsync}: Не удалось создать роль пользователя. Reason: {errorString}", nameof(InitializeAsync), GetIdentityErrorString(res.Errors));
+                }
+            }
+            if (await roleManager.FindByNameAsync("Master") == null)
+            {
+                var res = await roleManager.CreateAsync(new IdentityRole<Guid>("Master"));
+                if (res.Succeeded)
+                {
+                    _logger.LogInformation("{InitializeAsync}: Создана роль пользователя: \"Master\"", nameof(InitializeAsync));
                 }
                 else
                 {
@@ -87,7 +99,7 @@ public class AppInit
     /// </summary>
     /// <param name="settings"></param>
     /// <returns></returns>
-    private static bool ValidationSectionAdmin(SrvSettings settings)
+    private bool ValidationSectionAdmin(SrvSettings settings)
     {
         if (settings == null)
             return false;
@@ -103,7 +115,7 @@ public class AppInit
     /// </summary>
     /// <param name="errors">Список ошибок</param>
     /// <returns>Верент все ошибки в одну строку</returns>
-    private static string GetIdentityErrorString(IEnumerable<IdentityError> errors)
+    private string GetIdentityErrorString(IEnumerable<IdentityError> errors)
     {
         StringBuilder sb = new StringBuilder();
         int counter = 0;

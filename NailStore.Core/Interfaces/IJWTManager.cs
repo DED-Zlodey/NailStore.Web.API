@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using NailStore.Data.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -23,7 +23,7 @@ namespace NailStore.Core.Interfaces
         /// </summary>
         /// <param name="user">Пользователь</param>
         /// <returns></returns>
-        string GetBearerToken(IdentityUser user);
+        Task<string> GetBearerTokenAsync(UserEntity user);
         /// <summary>
         /// Получить полезную нагрузку из токена
         /// </summary>

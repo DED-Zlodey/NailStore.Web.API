@@ -14,7 +14,8 @@ public class StartUp
     }
     public void ConfigureServices(IServiceCollection services)
     {
-        ConfigureCustomServices.ConfigureLogging(services);
+        ConfigureCustomServices configService = new ConfigureCustomServices();
+        configService.ConfigureLogging(services);
         services.Configure<ForwardedHeadersOptions>(options =>
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -22,12 +23,12 @@ public class StartUp
         services.Configure<SrvSettings>(Configuration.GetSection("SrvSettings"));
         SrvSettings srvSettings = new SrvSettings();
         Configuration.GetSection("SrvSettings").Bind(srvSettings);
-        ConfigureCustomServices.ConfigureJWT(services, srvSettings);
-        ConfigureCustomServices.ConfigureDBServices(services, Configuration);
-        ConfigureCustomServices.ConfigureServices(services);
-        ConfigureCustomServices.ConfigureCommonCustomServices(services);
-        ConfigureCustomServices.ConfigureCoockies(services);
-        ConfigureCustomServices.ConfigureSwagger(services);
+        configService.ConfigureJWT(services, srvSettings);
+        configService.ConfigureDBServices(services, Configuration);
+        configService.ConfigureServices(services);
+        configService.ConfigureCommonCustomServices(services);
+        configService.ConfigureCoockies(services);
+        configService.ConfigureSwagger(services);
         services.AddControllers();
         services.AddCors();
     }

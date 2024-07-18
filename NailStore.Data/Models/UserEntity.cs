@@ -2,7 +2,7 @@
 
 namespace NailStore.Data.Models;
 
-public class UserEntity : IdentityUser
+public class UserEntity : IdentityUser<Guid>
 {
     /// <summary>
     /// Имя пользователя
@@ -20,4 +20,5 @@ public class UserEntity : IdentityUser
     /// Активна ли учетная запись (true - активна, false - отключена (пользователь не может выполнять ни какие операции))
     /// </summary>
     public bool Enable { get; set; }
+    public List<ServiceModel>? Services { get; set; }
 }

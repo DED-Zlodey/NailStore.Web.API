@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NailStore.Core.Interfaces;
 using NailStore.Core.Models;
-using NailStore.Web.API.DTOs;
+using NailStore.Web.API.DTOs.Account;
 
 namespace NailStore.Web.API.Controllers;
 
@@ -32,18 +32,23 @@ public class AccountController : ControllerBase
     [HttpPost("Register")]
     public async Task<ActionResult<string>> PostRegister([FromBody] RequestUser model)
     {
-        if (string.IsNullOrEmpty(model.UserName) || string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.Password)) 
+        if (string.IsNullOrEmpty(model.UserName) || string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.Password))
         {
             return ValidationProblem("Одно или несколько обязательных полей не заполнены");
         }
-        if (model.Url == null) 
+        if (string.IsNullOrEmpty(model.Url))
         {
             model.Url = $"{Request.Scheme}://{Request.Host}/api/Account/ConfirmEmail/";
         }
         var result = await _userService.RegisterUserAsync(model.Url, model.UserName, model.Email, model.Password);
         if (result.Header.StatusCode != 200)
         {
-            return ValidationProblem(result.Header.Error);
+            return Problem
+                           (
+                               detail: result.Header.Error,
+                               statusCode: result.Header.StatusCode,
+                               instance: HttpContext.Request.Path
+                           );
         }
         return Ok(result.Body.Message);
     }
@@ -68,8 +73,12 @@ public class AccountController : ControllerBase
         var result = await _userService.LoginUserAsync(model.Email, model.Password);
         if (result.Header.StatusCode != 200)
         {
-            HttpContext.Response.StatusCode = result.Header.StatusCode;
-            return ValidationProblem(result.Header.Error);
+            return Problem
+                           (
+                               detail: result.Header.Error,
+                               statusCode: result.Header.StatusCode,
+                               instance: HttpContext.Request.Path
+                           );
         }
         return Ok(result.Body.Token);
     }
@@ -86,13 +95,22 @@ public class AccountController : ControllerBase
         var confirmModel = UserConfirmitedEmail.Create(userId, code);
         if (confirmModel.Validator.StatusCode != 200)
         {
-            return BadRequest(confirmModel.Validator.Error);
+            return Problem
+                           (
+                               detail: confirmModel.Validator.Error,
+                               statusCode: confirmModel.Validator.StatusCode,
+                               instance: HttpContext.Request.Path
+                           );
         }
         var result = await _userService.ConfirmedEmailUser(confirmModel.ConfirmModel);
         if (result.Header.StatusCode != 200)
         {
-            HttpContext.Response.StatusCode = result.Header.StatusCode;
-            return ValidationProblem(result.Header.Error);
+            return Problem
+                           (
+                               detail: result.Header.Error,
+                               statusCode: result.Header.StatusCode,
+                               instance: HttpContext.Request.Path
+                           );
         }
         return Ok(result.Body.Message);
     }
@@ -120,17 +138,13 @@ public class AccountController : ControllerBase
     /// <returns></returns>
     [HttpPost]
     [Route("SendRecoverPassword")]
-    public async Task<ActionResult<string>> SendRecoverPassword(string email, string? url)
+    public async Task<ActionResult<string>> SendRecoverPassword([FromBody] SendRecoverPasswordDTO model)
     {
-        if(string.IsNullOrEmpty(email))
+        if (string.IsNullOrEmpty(model.Url))
         {
-            return ValidationProblem("Одно или несколько обязательных полей не заполнены");
+            model.Url = $"{Request.Scheme}://{Request.Host}/api/Account/ConfirmEmail/";
         }
-        if(url == null)
-        {
-            url = $"{Request.Scheme}://{Request.Host}/api/Account/ConfirmEmail/";
-        }
-        var result = await _userService.RecoveryPasswordSend(email, url);
+        var result = await _userService.RecoveryPasswordSend(model.Email, model.Url);
         return Ok(result.Body.Message);
     }
     /// <summary>
@@ -139,24 +153,27 @@ public class AccountController : ControllerBase
     /// <remarks>
     ///     {
     ///        "userId" : "идентификатор пользователя",
-    ///        "code" : "код отправленный на почту пользователя",
+    ///        "token" : "код отправленный на почту пользователя",
     ///        "password" : "Новый пароль"
     ///     }
     /// </remarks> 
-    /// <param name="userId">Идентификатор пользователя</param>
-    /// <param name="code">Код отправленный на почту пользователя</param>
-    /// <param name="password">Новый пароль</param>
+    /// <param name="model">Модель смены пароля на новый</param>
     /// <returns></returns>
     [HttpPost]
     [Route("ReSetPassword")]
-    public async Task<ActionResult<string>> RecoverPassword(string userId, string code, string password)
+    public async Task<ActionResult<string>> RecoverPassword([FromBody] RecoverPasswordDTO model)
     {
-        var result = await _userService.RecoveryPassword(userId, code, password);
-        if(result.Header.StatusCode != 200)
+        var result = await _userService.RecoveryPassword(model.UserId.ToString(), model.Token, model.Password);
+        if (result.Header.StatusCode != 200)
         {
-            HttpContext.Response.StatusCode = result.Header.StatusCode;
-            return ValidationProblem(result.Header.Error);
+            return Problem
+                           (
+                               detail: result.Header.Error,
+                               statusCode: result.Header.StatusCode,
+                               instance: HttpContext.Request.Path
+                           );
         }
         return Ok(result.Body.Message);
     }
+
 }

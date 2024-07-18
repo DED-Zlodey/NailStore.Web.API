@@ -13,13 +13,13 @@ public class UserService : IUserService
 {
     readonly ILogger<UserService> _logger;
     readonly UserManager<UserEntity> _userManager;
-    readonly RoleManager<IdentityRole> _roleManager;
+    readonly RoleManager<IdentityRole<Guid>> _roleManager;
     readonly SignInManager<UserEntity> _signInManager;
     readonly IJWTManager _jwtManager;
     readonly IEmailService _emailService;
     readonly IUserRepository _userRepository;
 
-    public UserService(UserManager<UserEntity> userManager, RoleManager<IdentityRole> roleManager, SignInManager<UserEntity> signInManager, IJWTManager jWTManager, IUserRepository userRepository, IEmailService emailService, ILogger<UserService> logger)
+    public UserService(UserManager<UserEntity> userManager, RoleManager<IdentityRole<Guid>> roleManager, SignInManager<UserEntity> signInManager, IJWTManager jWTManager, IUserRepository userRepository, IEmailService emailService, ILogger<UserService> logger)
     {
         _userManager = userManager;
         _roleManager = roleManager;
@@ -88,7 +88,7 @@ public class UserService : IUserService
     /// </summary>
     /// <param name="id">Идентификатор пользователя</param>
     /// <returns>Возвращает объект ответа</returns>
-    public async Task<ResponseModelCore> GetUserByIdAsync(string id)
+    public async Task<ResponseModelCore> GetUserByIdAsync(Guid id)
     {
         return await _userRepository.GetUserByIdAsync(id);
     }
@@ -107,7 +107,7 @@ public class UserService : IUserService
             var result = await _signInManager.CheckPasswordSignInAsync(user, password, true);
             if (result.Succeeded)
             {
-                var token = _jwtManager.GetBearerToken(user);
+                var token = await _jwtManager.GetBearerTokenAsync(user);
                 return new ResponseModelCore
                 {
                     Header = new()
@@ -351,7 +351,7 @@ public class UserService : IUserService
                 Header = new() { Error = string.Empty, StatusCode = resultSendEmail.StatusCode },
                 Body = new()
                 {
-                    Message = $"Не удалось отправить инструкции по восстановлению пароля на указанную Вами почту. Error: {resultSendEmail.StatusCode}"
+                    Message = $"Не удалось отправить инструкции по восстановлению пароля на указанную Вами почту. Возможно, были допущены опечатки при вводе адреса эл. почты? Error: {resultSendEmail.StatusCode}"
                 }
             };
         }
@@ -365,52 +365,108 @@ public class UserService : IUserService
     /// <returns>Возвращает объект ответа</returns>
     public async Task<ResponseModelCore> RecoveryPassword(string userId, string inputСode, string newPass)
     {
-        var user = await _userManager.FindByIdAsync(userId);
-        if (user == null)
+        try
         {
-            return new ResponseModelCore
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
             {
-                Header = new()
+                _logger.LogError("{method} Не удалось получить пользователя по его идентификатору: {id}", nameof(RecoveryPassword), userId);
+                return new ResponseModelCore
                 {
-                    Error = $"Не удалось получить пользователя по его идентификатору: '{userId}'.",
-                    StatusCode = 404
-                }
-            };
+                    Header = new()
+                    {
+                        Error = $"Не удалось получить пользователя по его идентификатору: '{userId}'.",
+                        StatusCode = 404
+                    }
+                };
+            }
+            var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(inputСode));
+            var result = await _userManager.ResetPasswordAsync(user!, code, newPass);
+            if (result.Succeeded)
+            {
+                return new ResponseModelCore
+                {
+                    Header = new()
+                    {
+                        Error = string.Empty,
+                        StatusCode = 200
+                    },
+                    Body = new()
+                    {
+                        Message = $"Пароль успешно изменен"
+                    }
+                };
+            }
+            else
+            {
+                var errorStr = GetIdentityErrorString(result.Errors.ToList());
+                _logger.LogError("{method} Не удалось сменить пароль для аккаунта {accont}. Reason: {reason}", nameof(RecoveryPassword), user.Email, errorStr);
+                return new ResponseModelCore
+                {
+                    Header = new()
+                    {
+                        Error = $"Не удалось сменить пароль. Reason: {errorStr}",
+                        StatusCode = 500
+                    },
+                    Body = new()
+                    {
+                        Message = $"Не удалось сменить пароль. Reason: {errorStr}"
+                    }
+                };
+            }
         }
-        var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(inputСode));
-        var result = await _userManager.ResetPasswordAsync(user!, code, newPass);
-        if (result.Succeeded) 
+        catch (Exception ex) 
         {
+            _logger.LogError(ex, "{method} Не удалось сменить пароль для аккаунта c Id: {accont}. Reason: {reason}", nameof(RecoveryPassword), userId, ex.Message);
             return new ResponseModelCore
             {
                 Header = new()
                 {
-                    Error = string.Empty,
-                    StatusCode = 200
-                },
-                Body = new()
-                {
-                    Message = $"Пароль успешно изменен"
-                }
-            };
-        }
-        else
-        {
-            var errorStr = GetIdentityErrorString(result.Errors.ToList());
-            _logger.LogError("{method} Не удалось сменить пароль для акканта {accont}. Reason: {reason}", nameof(RecoveryPassword), user.Email, errorStr);
-            return new ResponseModelCore
-            {
-                Header = new()
-                {
-                    Error = $"Не удалось сменить пароль. Reason: {errorStr}",
+                    Error = $"Не удалось сменить пароль.",
                     StatusCode = 500
                 },
                 Body = new()
                 {
-                    Message = $"Не удалось сменить пароль. Reason: {errorStr}"
+                    Message = $"Не удалось сменить пароль."
                 }
             };
         }
+    }
+    /// <summary>
+    /// Получить роли пользователя
+    /// </summary>
+    /// <param name="userId">Идентификтор пользователя</param>
+    /// <returns>Верент список ролей пользователя</returns>
+    public async Task<string[]> GetUserRolesAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if(user == null)
+        {
+            return null;
+        }
+        var roles = await _userManager.GetRolesAsync(user);
+        return roles.ToArray();
+    }
+    /// <summary>
+    /// Имеются ли роли у пользователя?
+    /// </summary>
+    /// <param name="userId">Идентификатор пользователя</param>
+    /// <param name="inputRoles">Роли которые проверяются</param>
+    /// <returns>Верент <b>true</b>,  если роли у пользователя имеются и <b>false</b>, если ни одной роли пользователь не имеет</returns>
+    public async Task<bool> IsRolesAllowedAsync(string userId, List<string> inputRoles)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return false;
+        }
+        var roles = await _userManager.GetRolesAsync(user);
+        var intersect = roles.Intersect(inputRoles).ToArray();
+        if(intersect.Length > 0)
+        {
+            return true;
+        }
+        return false;
     }
 
 

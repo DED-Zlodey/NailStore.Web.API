@@ -6,7 +6,6 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        var nameVersion = System.Runtime.InteropServices.RuntimeInformation.OSDescription;
         Log.Logger = new LoggerConfiguration()
             .Enrich.FromLogContext()
             .CreateLogger();
@@ -19,8 +18,9 @@ public class Program
             {
                 using (var scope = host.Services.CreateScope())
                 {
+                    AppInit init = new AppInit();
                     var serviceProvider = scope.ServiceProvider;
-                    task = AppInit.InitializeAsync(serviceProvider);
+                    task = init.InitializeAsync(serviceProvider);
                     task.Wait();
                 }
             }

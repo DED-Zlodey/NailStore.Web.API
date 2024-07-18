@@ -12,7 +12,10 @@
 
   <ItemGroup>
     <Folder Include="BL\" />
-    <Folder Include="Models\ResponseModels\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NailStore.Data\NailStore.Data.csproj" />
   </ItemGroup>
 
 </Project>
