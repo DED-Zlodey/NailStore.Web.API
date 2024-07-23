@@ -29,6 +29,6 @@ namespace NailStore.Core.Interfaces
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        JwtSecurityToken GetPayloadToken(string token);
+        JwtSecurityToken? GetPayloadToken(string token);
     }
 }

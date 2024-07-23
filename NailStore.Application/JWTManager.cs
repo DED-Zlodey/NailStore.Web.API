@@ -67,7 +67,7 @@ public class JWTManager : IJWTManager
         }
         return false;
     }
-    public JwtSecurityToken GetPayloadToken(string token)
+    public JwtSecurityToken? GetPayloadToken(string token)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var jwtToken = GetJwtToken(token);

@@ -13,6 +13,11 @@ public class ServiceRepository: IServiceRepository
     private readonly ApplicationDbContext _context;
     private readonly ILogger<ServiceRepository> _logger;
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
     public ServiceRepository(ApplicationDbContext context, ILogger<ServiceRepository> logger)
     {
         _context = context;
@@ -33,7 +38,10 @@ public class ServiceRepository: IServiceRepository
     {
         try
         {
-            var category = await _context.CategoriesServices.AsNoTracking().FirstOrDefaultAsync(x => x.CategoryId == categoryId);
+            var category = await _context.CategoriesServices.AsNoTracking().Select(x => new CategoryServiceModel
+            {
+                CategoryId = x.CategoryId,
+            }).FirstOrDefaultAsync(x => x.CategoryId == categoryId);
             if (category == null)
             {
                 _logger.LogError("{method} Категория c Id:{id} не найдена.", nameof(AddServiceAsync), categoryId);
@@ -90,7 +98,15 @@ public class ServiceRepository: IServiceRepository
             };
         }
     }
-    public async Task<ResponseModelCore> GetServicesByCategoryAsync(int categoryId)
+
+    /// <summary>
+    /// Получить все услуги из категории
+    /// </summary>
+    /// <param name="categoryId">Идентификатор категории</param>
+    /// <param name="pageNumber">Номер запрашиваемой страницы</param>
+    /// <param name="pageSize">Количество записей на страницу</param>
+    /// <returns></returns>
+    public async Task<ResponseModelCore> GetServicesByCategoryAsync(int categoryId, int pageNumber, int pageSize)
     {
         var response = new ResponseModelCore 
         {
@@ -100,7 +116,19 @@ public class ServiceRepository: IServiceRepository
                 StatusCode = 500
             }
         };
-        var services = await _context.Services.Where(x => x.CategoryId == categoryId).Select(x => new ResponseServiceModelCore
+        if (pageNumber <= 0)
+        {
+            pageNumber = 1;
+        }
+        if (pageSize <= 0)
+        {
+            pageSize = 10;
+        }
+        if (pageSize > 15)
+        {
+            pageSize = 15;
+        }
+        var services = _context.Services.Where(x => x.CategoryId == categoryId).Select(x => new ResponseServiceModelCore
         {
             CategoryName = x.Category.CategoryName,
             CategoryId = x.CategoryId,
@@ -119,12 +147,53 @@ public class ServiceRepository: IServiceRepository
             Price = x.Price,
             ServiceName = x.ServiceName,
             ServiceId = x.ServiceId
-        }).ToListAsync();
-        response.Body = new ResponseBodyCore
+        });
+        var countServices = await services.CountAsync();
+        var resultServices = await services.OrderBy(x => x.ServiceId).Skip((pageNumber - 1) * pageSize).Take(pageSize).AsNoTracking().ToListAsync();
+        var result =
+        response.Body = new ()
         {
-            Services = services
+            GetServices = new ()
+            {
+                PageInfo = new ResponsePageInfoModelCore(countServices, pageNumber, pageSize),
+                Services = resultServices
+            }
         };
         response.Header.StatusCode = 200;
         return response;
+    }
+    /// <summary>
+    /// Удаление услуги по ее идентификатору
+    /// </summary>
+    /// <param name="serviceId">Идентификатор услуги</param>
+    /// <param name="userId">Идентификатор пользователя</param>
+    /// <returns></returns>
+    public async Task<ResponseModelCore> RemoveServiceAsync(int serviceId, Guid userId)
+    {
+        var service = await _context.Services.FirstOrDefaultAsync(x => x.ServiceId == serviceId && x.UserId == userId);
+        if (service != null)
+        {
+            _context.Remove(service);
+            await _context.SaveChangesAsync();
+            return new()
+            {
+                Header = new()
+                {
+                    StatusCode = 200,
+                },
+                Body = new()
+                {
+                    Message = "Услуга успешно удалена"
+                }
+            };
+        }
+        return new()
+        {
+            Header = new()
+            {
+                StatusCode = 404,
+                Error = "Не удалось удалить услугу. Услуга не найдена или не принадлежит пользователю"
+            }
+        };
     }
 }

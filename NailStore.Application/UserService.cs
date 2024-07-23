@@ -19,7 +19,8 @@ public class UserService : IUserService
     readonly IEmailService _emailService;
     readonly IUserRepository _userRepository;
 
-    public UserService(UserManager<UserEntity> userManager, RoleManager<IdentityRole<Guid>> roleManager, SignInManager<UserEntity> signInManager, IJWTManager jWTManager, IUserRepository userRepository, IEmailService emailService, ILogger<UserService> logger)
+    public UserService(UserManager<UserEntity> userManager, RoleManager<IdentityRole<Guid>> roleManager, SignInManager<UserEntity> signInManager, 
+        IJWTManager jWTManager, IUserRepository userRepository, IEmailService emailService, ILogger<UserService> logger)
     {
         _userManager = userManager;
         _roleManager = roleManager;
@@ -286,7 +287,7 @@ public class UserService : IUserService
         }
         else
         {
-            var reason = $"{userName} - запрещенный никнейм!";
+            var reason = $"{userName} - никнейм уже занят!";
             _logger.LogError("{nameMethod}: Пользователь {Email} не зарегистрирован. Reson: {errorString}", nameof(RegisterUserAsync), email, reason);
             return new ResponseModelCore
             {
@@ -453,7 +454,7 @@ public class UserService : IUserService
     /// <param name="userId">Идентификатор пользователя</param>
     /// <param name="inputRoles">Роли которые проверяются</param>
     /// <returns>Верент <b>true</b>,  если роли у пользователя имеются и <b>false</b>, если ни одной роли пользователь не имеет</returns>
-    public async Task<bool> IsRolesAllowedAsync(string userId, List<string> inputRoles)
+    public async Task<bool> IsRolesAllowedAsync(string? userId, List<string> inputRoles)
     {
         var user = await _userManager.FindByIdAsync(userId);
         if (user == null)
@@ -501,9 +502,9 @@ public class UserService : IUserService
     /// </summary>
     /// <param name="nickName">Проверяемый никнейм</param>
     /// <returns>Вернет <b>true</b>, если никнейм запрещен и <b>false</b>, если разрешен</returns>
-    private bool IsStopNickName(string nickName)
+    private bool IsStopNickName(ReadOnlySpan<char> nickName)
     {
-        if(nickName.Equals("Admin") || nickName.Equals("admin"))
+        if(nickName.IndexOf("Admin") >= 0 || nickName.IndexOf("admin") >= 0)
         {
             return true;
         }

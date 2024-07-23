@@ -1,4 +1,5 @@
-﻿namespace NailStore.Data.Models;
+﻿#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+namespace NailStore.Data.Models;
 
 public class ServiceModel
 {
@@ -38,4 +39,12 @@ public class ServiceModel
     /// Категория которой принадлежит данная услуга
     /// </summary>
     public CategoryServiceModel Category { get; set; }
+    /// <summary>
+    /// Город в котором предоставляется услуга
+    /// </summary>
+    public string City { get; set; }
+    /// <summary>
+    /// Краткое описание услуги
+    /// </summary>
+    public string DescriptionService { get; set; }
 }
