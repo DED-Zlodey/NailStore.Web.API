@@ -8,6 +8,6 @@ namespace NailStore.Core.Models
         public string? Message { get; set; }
         public UserIdentityCoreModel? User { get; set; }
         public DateTimeOffset? LockedOutTime { get; set; }
-        public List<ResponseServiceModelCore> Services { get; set; }
+        public ResponseGetServiceModelCore GetServices { get; set; }
     }
 }

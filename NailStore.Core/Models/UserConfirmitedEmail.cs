@@ -4,7 +4,8 @@ public class UserConfirmitedEmail
 {
     public string UserId { get; }
     public string Code { get; }
-    private UserConfirmitedEmail(string userId, string code)
+
+    public UserConfirmitedEmail(string userId, string code)
     {
         Code = code;
         UserId = userId;

@@ -65,5 +65,5 @@ public interface IUserService
     /// <param name="userId">Идентификатор пользователя</param>
     /// <param name="inputRoles">Роли которые проверяются</param>
     /// <returns>Верент <b>true</b>,  если роли у пользователя имеются и <b>false</b>, если ни одной роли пользователь не имеет</returns>
-    Task<bool> IsRolesAllowedAsync(string userId, List<string> inputRoles);
+    Task<bool> IsRolesAllowedAsync(string? userId, List<string> inputRoles);
 }

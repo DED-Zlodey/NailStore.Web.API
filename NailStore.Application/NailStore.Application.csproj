@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\NailStore.Core\NailStore.Core.csproj" />
     <ProjectReference Include="..\NailStore.Data\NailStore.Data.csproj" />
+    <ProjectReference Include="..\NailStore.Repositories\NailStore.Repositories.csproj" />
   </ItemGroup>
 
 </Project>

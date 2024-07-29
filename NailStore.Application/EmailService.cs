@@ -18,16 +18,18 @@ public class EmailService : IEmailService
     private readonly string _emailPassword;
     private readonly int _portSmtpServer;
     private readonly ILogger<EmailService> _logger;
+    private SmtpClient _smtpClient;
 
-    public EmailService(IOptions<SrvSettings> options, ILogger<EmailService> logger)
+    public EmailService(IOptions<SrvSettings> options, ILogger<EmailService> logger, SmtpClient smtpClient)
     {
-        _smtpServer = options.Value.EmailSettings.SMTPHost!;
+        _smtpServer = options.Value.EmailSettings!.SMTPHost!;
         _orgName = options.Value.EmailSettings.OrgName!;
         _emailOrg = options.Value.EmailSettings.EmailOrg!;
         _useSSL = options.Value.EmailSettings.UseSSL;
         _emailPassword = options.Value.EmailSettings.EmailPass!;
         _portSmtpServer = options.Value.EmailSettings.SMTPPort;
         _logger = logger;
+        _smtpClient = smtpClient;
     }
     /// <summary>
     /// Отправка письма
@@ -53,12 +55,12 @@ public class EmailService : IEmailService
             {
                 Text = body
             };
-            using (var client = new SmtpClient())
+            using (_smtpClient)
             {
-                await client.ConnectAsync(_smtpServer, _portSmtpServer, _useSSL);
-                await client.AuthenticateAsync(_emailOrg, _emailPassword);
-                response.MessageResultSending = await client.SendAsync(emailMessage);
-                await client.DisconnectAsync(true);
+                await _smtpClient.ConnectAsync(_smtpServer, _portSmtpServer, _useSSL);
+                await _smtpClient.AuthenticateAsync(_emailOrg, _emailPassword);
+                response.MessageResultSending = await _smtpClient.SendAsync(emailMessage);
+                await _smtpClient.DisconnectAsync(true);
             }
             response.IsSending = true;
             return response;

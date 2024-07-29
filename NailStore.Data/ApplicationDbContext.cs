@@ -1,16 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-
 using NailStore.Data.Models;
-
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NailStore.Data
 {
     public class ApplicationDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Guid>
     {
-
         public DbSet<CategoryServiceModel> CategoriesServices { get; set; }
         public DbSet<ServiceModel> Services { get; set; }
         public DbSet<ServiceDescriptionModel> DescriptionsService { get; set; }
@@ -18,7 +14,7 @@ namespace NailStore.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
             AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-            Database.EnsureCreated();
+            //Database.EnsureCreated();
         }
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -149,6 +145,8 @@ namespace NailStore.Data
                 ent.Property(x => x.UserId).HasColumnName("user_id");
                 ent.Property(x => x.DurationTime).HasColumnName("duration");
                 ent.Property(x => x.Price).HasColumnName("price");
+                ent.Property(x => x.City).HasColumnName("city");
+                ent.Property(x => x.DescriptionService).HasColumnName("description_service").HasMaxLength(300);
                 ent.HasMany(x => x.ServiceDescriptions).WithOne(x => x.Service).HasForeignKey(x => x.ServiceId);
                 ent.HasOne(x => x.User).WithMany(x => x.Services).HasForeignKey(x => x.UserId);
                 ent.HasOne(x => x.Category).WithMany(x => x.Services).HasForeignKey(x => x.CategoryId);

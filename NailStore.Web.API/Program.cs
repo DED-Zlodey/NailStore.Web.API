@@ -28,29 +28,28 @@ public class Program
             {
                 if (logger != null)
                 {
-                    logger.LogError(ex, "Program | Main | Reason: {ex.Message}", ex.Message);
+                    logger.LogError(ex, " {method} Program | Main | Reason: {Message}", nameof(Main), ex.Message);
                 }
             }
             host.Run();
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "The following {Exception} was thrown during application startup", ex.Message);
+            Log.Error(ex, "{method}, The following {Exception} was thrown during application startup", nameof(Main), ex.Message);
         }
         finally
         {
             Log.CloseAndFlush();
         }
     }
-
     public static IHostBuilder CreateHostBuilder(string[] args) =>
        Host.CreateDefaultBuilder(args)
         .UseSerilog((context, config) =>
         {
             config.ReadFrom.Configuration(context.Configuration);
         })
-           .ConfigureWebHostDefaults(webBuilder =>
-           {
-               webBuilder.UseStartup<StartUp>();
-           });
+        .ConfigureWebHostDefaults(webBuilder =>
+        {
+            webBuilder.UseStartup<StartUp>();
+        });
 }

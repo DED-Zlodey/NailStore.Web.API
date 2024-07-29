@@ -3,9 +3,18 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace NailStore.Web.API.Extensions
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public static class HttpContextExtensions
     {
-        public static JwtSecurityToken GetPayloadForTokenAsync(this HttpContext context, IJWTManager _jwtService)
+        /// <summary>
+        /// Получить нагрузку JWT токена
+        /// </summary>
+        /// <param name="context">Контекст</param>
+        /// <param name="_jwtService">Сервис JWT токенов</param>
+        /// <returns></returns>
+        public static JwtSecurityToken? GetPayloadForTokenAsync(this HttpContext context, IJWTManager _jwtService)
         {
             if (context.Request.Headers.TryGetValue("Authorization", out var bearer))
             {
