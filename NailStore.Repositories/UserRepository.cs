@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NailStore.Core.Interfaces;
 using NailStore.Core.Models;
 using NailStore.Data;
+using NailStore.Data.Models;
 
 namespace NailStore.Repositories;
 
@@ -89,15 +89,22 @@ public class UserRepository : IUserRepository
     /// <returns>Вернет <b>true</b>, если имя свободно и <b>false</b>, если не свободно</returns>
     public async Task<bool> UserNameIsFreeAsync(string username)
     {
-        var user = await _context.Users.Select(x => new IdentityUser<Guid>
+        try
         {
-            UserName = x.UserName,
-            Id = x.Id,
-        }).FirstOrDefaultAsync(x => x.UserName == username);
-        if (user == null)
+            var user = await _context.Users.Select(x => new UserEntity
+            {
+                UserName = x.UserName,
+                Id = x.Id,
+            }).FirstOrDefaultAsync(x => x.UserName == username);
+            if (user == null)
+            {
+                return true;
+            }
+            return false;
+        }
+        catch (Exception e)
         {
             return true;
         }
-        return false;
     }
 }

@@ -13,6 +13,8 @@ using NailStore.Repositories;
 using Serilog;
 using System.Reflection;
 using System.Text;
+using MailKit;
+using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.HttpOverrides;
 
 namespace NailStore.Web.API.ConfigureServices;
@@ -59,9 +61,10 @@ public struct ConfigureCustomServices
             .AddScoped<IUserService, UserService>()
             .AddScoped<IUserRepository, UserRepository>()
             .AddScoped<IJWTManager, JWTManager>()
-            .AddScoped<IEmailService, EmailService>()
-            .AddScoped<IProviderService, ProviderService>()
-            .AddScoped<IServiceRepository, ServiceRepository>()
+            .AddSingleton<IEmailService, EmailService>()
+            .AddScoped<IProviderService<Guid>, ProviderService>()
+            .AddScoped<IServiceRepository<Guid>, ServiceRepository>()
+            .AddSingleton<SmtpClient>()
             ;
     }
 
@@ -158,7 +161,7 @@ public struct ConfigureCustomServices
     }
 
     /// <summary>
-    /// Конфигурирование логировния
+    /// Конфигурирование логирования
     /// </summary>
     /// <param name="services"></param>
     public void ConfigureLogging(IServiceCollection services)

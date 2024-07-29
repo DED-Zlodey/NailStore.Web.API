@@ -113,7 +113,7 @@ public class JWTManager : IJWTManager
                 signingCredentials: new SigningCredentials(GetSymmetricSecurityKey(_settings.ServerKey!), SecurityAlgorithms.HmacSha256));
         return new JwtSecurityTokenHandler().WriteToken(jwt);
     }
-    private async Task<ClaimsIdentity> GetIdentityCaimsAsync(UserEntity user)
+    public async Task<ClaimsIdentity> GetIdentityCaimsAsync(UserEntity user)
     {
         var userRoles = await _userManager.GetRolesAsync(user);
         var claims = new List<Claim>

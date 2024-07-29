@@ -14,7 +14,7 @@ namespace NailStore.Web.API.Controllers
     [ApiController]
     public class ServiceController : ControllerBase
     {
-        private readonly IProviderService _providerService;
+        private readonly IProviderService<Guid> _providerService;
         private readonly IJWTManager _jwtService;
         private readonly ILogger<ServiceController> _logger;
         private readonly IUserService _userService;
@@ -26,7 +26,7 @@ namespace NailStore.Web.API.Controllers
         /// <param name="logger">Логгер</param>
         /// <param name="jWtManager">Сервис для работы с JWT токенами</param>
         /// <param name="userService">Сервис для работы с пользователями</param>
-        public ServiceController(IProviderService providerService, ILogger<ServiceController> logger,
+        public ServiceController(IProviderService<Guid> providerService, ILogger<ServiceController> logger,
             IJWTManager jWtManager, IUserService userService)
         {
             _providerService = providerService;

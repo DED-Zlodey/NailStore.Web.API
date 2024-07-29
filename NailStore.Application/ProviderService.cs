@@ -1,24 +1,15 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
-using NailStore.Core.Interfaces;
+﻿using NailStore.Core.Interfaces;
 using NailStore.Core.Models;
-using NailStore.Data.Models;
 
 namespace NailStore.Application;
 
-public class ProviderService : IProviderService
+public class ProviderService : IProviderService<Guid>
 {
-    private readonly IServiceRepository _serviceRepository;
-    private readonly ILogger<ProviderService> _logger;
-    private readonly UserManager<UserEntity> _userManager;
-    private readonly RoleManager<IdentityRole<Guid>> _roleManager;
+    private readonly IServiceRepository<Guid> _serviceRepository;
 
-    public ProviderService(IServiceRepository serviceRepository, ILogger<ProviderService> logger, UserManager<UserEntity> userManager, RoleManager<IdentityRole<Guid>> roleManager)
+    public ProviderService(IServiceRepository<Guid> serviceRepository)
     {
         _serviceRepository = serviceRepository;
-        _logger = logger;
-        _userManager = userManager;
-        _roleManager = roleManager;
     }
     /// <summary>
     /// Добавить услугу

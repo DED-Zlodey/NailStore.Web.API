@@ -17,19 +17,19 @@ public class UserService : IUserService
     readonly SignInManager<UserEntity> _signInManager;
     readonly IJWTManager _jwtManager;
     readonly IEmailService _emailService;
-    readonly IUserRepository _userRepository;
 
-    public UserService(UserManager<UserEntity> userManager, RoleManager<IdentityRole<Guid>> roleManager, SignInManager<UserEntity> signInManager, 
-        IJWTManager jWTManager, IUserRepository userRepository, IEmailService emailService, ILogger<UserService> logger)
+    public UserService(UserManager<UserEntity> userManager, RoleManager<IdentityRole<Guid>> roleManager,
+        SignInManager<UserEntity> signInManager,
+        IJWTManager jWTManager, IEmailService emailService, ILogger<UserService> logger)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _signInManager = signInManager;
         _jwtManager = jWTManager;
         _emailService = emailService;
-        _userRepository = userRepository;
         _logger = logger;
     }
+
     /// <summary>
     ///  Подтверждение Email пользователя
     /// </summary>
@@ -49,9 +49,10 @@ public class UserService : IUserService
                 }
             };
         }
+
         var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(userConfirmited.Code));
         var result = await _userManager.ConfirmEmailAsync(user!, code);
-        if (result.Succeeded) 
+        if (result.Succeeded)
         {
             return new ResponseModelCore
             {
@@ -69,7 +70,8 @@ public class UserService : IUserService
         else
         {
             var errorStr = GetIdentityErrorString(result.Errors.ToList());
-            _logger.LogError("{method} Не удалось сменить пароль для акканта {accont}. Reason: {reason}", nameof(ConfirmedEmailUser), user.Email, errorStr);
+            _logger.LogError("{method} Не удалось сменить пароль для акканта {accont}. Reason: {reason}",
+                nameof(ConfirmedEmailUser), user.Email, errorStr);
             return new ResponseModelCore
             {
                 Header = new()
@@ -84,6 +86,7 @@ public class UserService : IUserService
             };
         }
     }
+
     /// <summary>
     /// Получить пользователя по его идентификатору
     /// </summary>
@@ -91,17 +94,34 @@ public class UserService : IUserService
     /// <returns>Возвращает объект ответа</returns>
     public async Task<ResponseModelCore> GetUserByIdAsync(Guid id)
     {
-        return await _userRepository.GetUserByIdAsync(id);
+        var user = await _userManager.FindByIdAsync(id.ToString());
+        if (user != null)
+        {
+            return UserIdentityCoreModel.CreateUser(user!.Id, user.UserName!, user.RegisterAt, user.PhoneNumber,
+                user.Enable);
+        }
+        _logger.LogError("{method} Пользователь с идентификатором {id} не найден", nameof(GetUserByIdAsync), id);
+        return new ResponseModelCore
+        {
+            Header = new()
+            {
+                Error = $"Пользователь с идентификатором '{id}' не найден.",
+                StatusCode = 404
+            }
+        };
     }
+
     /// <summary>
-    /// Аутентификация пользователя по Email и паролю
+    /// Асинхронно выполняет вход пользователя в систему.
     /// </summary>
-    /// <param name="email">Email пользователя</param>
-    /// <param name="password">Пароль пользователя</param>
-    /// <returns>Возвращает объект ответа</returns>
+    /// <param name="email">Email пользователя.</param>
+    /// <param name="password">Пароль пользователя.</param>
+    /// <returns>
+    /// Возвращает объект ответа, содержащий токен доступа в случае успешного входа.
+    /// Если вход не удачен, возвращает соответствующее сообщение об ошибке.
+    /// </returns>
     public async Task<ResponseModelCore> LoginUserAsync(string email, string password)
     {
-        email = email.ToLower();
         var user = await _userManager.FindByEmailAsync(email);
         if (user != null)
         {
@@ -126,24 +146,23 @@ public class UserService : IUserService
             {
                 if (result.IsLockedOut)
                 {
-                    var mess = string.Empty;
-                    var lockOutResult = await _userRepository.GetLockOutTimeUser(email);
-                    var time = (lockOutResult.Body.LockedOutTime - DateTime.UtcNow);
-                    if (lockOutResult.Header.StatusCode == 200)
+                    var lockoutEndDate = _userManager.GetLockoutEndDateAsync(user);
+                    if (lockoutEndDate.IsCompletedSuccessfully)
                     {
-                        mess = $"Из-за превышения неудачных попыток входа, пользователю  ограничен вход на {Math.Ceiling(time!.Value.TotalSeconds)} секунд. Попробуйте войти через {Math.Ceiling(time!.Value.TotalSeconds)} секунд.";
-                        return new ResponseModelCore 
+                        var responseModel = new ResponseModelCore
                         {
                             Header = new()
                             {
-                                Error = mess,
-                                StatusCode = lockOutResult.Header.StatusCode,
+                                Error =
+                                    $"Из-за превышения неудачных попыток входа, пользователь заблокирован до {lockoutEndDate.Result.Value.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss")} UTC+8",
+                                StatusCode = 403,
                             },
                             Body = new()
                             {
-                                Message = mess
+                                Message = "Из-за превышения неудачных попыток входа, пользователь заблокирован."
                             }
                         };
+                        return responseModel;
                     }
                     return new ResponseModelCore
                     {
@@ -158,7 +177,8 @@ public class UserService : IUserService
                         }
                     };
                 }
-                return new ResponseModelCore 
+
+                return new ResponseModelCore
                 {
                     Header = new()
                     {
@@ -188,31 +208,34 @@ public class UserService : IUserService
             };
         }
     }
+
     /// <summary>
     /// Регистрация пользователя
     /// </summary>
     /// <param name="url">Начальный адрес для подтверждения Email</param>
     /// <param name="userName">Никнейм пользователя</param>
-    /// <param name="email">Email пользовтаеля</param>
+    /// <param name="email">Email пользователя</param>
     /// <param name="password">Пароль пользователя</param>
     /// <returns>Возвращает объект ответа</returns>
     public async Task<ResponseModelCore> RegisterUserAsync(string url, string userName, string email, string password)
     {
-        email = email.ToLower();
-        if (!IsStopNickName(userName)) 
+        if (!IsStopNickName(userName))
         {
-            if(await UserNameIsFreeAsync(userName))
+            if (await UserNameIsFreeAsync(userName))
             {
                 var userEmail = await _userManager.FindByEmailAsync(email);
-                if (userEmail != null) 
+                if (userEmail != null)
                 {
                     var reason = $"{email} - уже существует!";
-                    _logger.LogError("{nameMethod}: Пользователь {Email} не зарегистрирован. Reson: {errorString}", nameof(RegisterUserAsync), email, reason);
+                    _logger.LogError("{nameMethod}: Пользователь {Email} не зарегистрирован. Reson: {errorString}",
+                        nameof(RegisterUserAsync), email, reason);
                     return new ResponseModelCore
                     {
-                        Header = new() { Error = $"Пользователь {email} не зарегистрирован. Reson: {reason}", StatusCode = 400 },
+                        Header = new()
+                            { Error = $"Пользователь {email} не зарегистрирован. Reson: {reason}", StatusCode = 400 },
                     };
                 }
+
                 var regUser = new UserEntity
                 {
                     UserName = userName,
@@ -226,18 +249,23 @@ public class UserService : IUserService
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(regUser);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
                     var urlCallback = $"{url}{regUser.Id}/{code}";
-                    var resultSendEmail = await _emailService.SendEmailAsync(regUser.Email, "Подтверждение регистрации", "Подтвердите вашу учетную запись, кликнув <a href=\"" + urlCallback + "\">здесь</a>");
+                    var resultSendEmail = await _emailService.SendEmailAsync(regUser.Email, "Подтверждение регистрации",
+                        "Подтвердите вашу учетную запись, кликнув <a href=\"" + urlCallback + "\">здесь</a>");
                     if (resultSendEmail.IsSending)
                     {
                         var res = await _userManager.AddToRoleAsync(regUser, "User");
                         if (res.Succeeded)
                         {
-                            _logger.LogInformation("{nameMethod}: Роль: \"User\" присвоена пользователю: {Email}", nameof(RegisterUserAsync), regUser.Email);
+                            _logger.LogInformation("{nameMethod}: Роль: \"User\" присвоена пользователю: {Email}",
+                                nameof(RegisterUserAsync), regUser.Email);
                         }
                         else
                         {
-                            _logger.LogError("{nameMethod}: Не удалось присвоить роль: \"User\", пользовтаелю: {Email}.", nameof(RegisterUserAsync), regUser.Email);
+                            _logger.LogError(
+                                "{nameMethod}: Не удалось присвоить роль: \"User\", пользовтаелю: {Email}.",
+                                nameof(RegisterUserAsync), regUser.Email);
                         }
+
                         return new ResponseModelCore
                         {
                             Header = new()
@@ -247,19 +275,23 @@ public class UserService : IUserService
                             },
                             Body = new()
                             {
-                                Message = "Регистрация прошла успешно! На электронную почту выслано письмо, для завершения регистрации выполните инструкции в отправленном письме. Спасибо!"
+                                Message =
+                                    "Регистрация прошла успешно! На электронную почту выслано письмо, для завершения регистрации выполните инструкции в отправленном письме. Спасибо!"
                             }
                         };
                     }
                     else
                     {
                         await _userManager.DeleteAsync(regUser);
-                        _logger.LogError("{nameMethod}: Пользователь {Email} не зарегистрирован. Не удалось отправить письмо", nameof(RegisterUserAsync), regUser.Email);
+                        _logger.LogError(
+                            "{nameMethod}: Пользователь {Email} не зарегистрирован. Не удалось отправить письмо",
+                            nameof(RegisterUserAsync), regUser.Email);
                         return new ResponseModelCore
                         {
                             Header = new()
                             {
-                                Error = $"Пользователь {regUser.Email} не зарегистрирован. Не удалось отправить письмо. Error: {resultSendEmail.StatusCode}",
+                                Error =
+                                    $"Пользователь {regUser.Email} не зарегистрирован. Не удалось отправить письмо. Error: {resultSendEmail.StatusCode}",
                                 StatusCode = 500
                             }
                         };
@@ -268,33 +300,43 @@ public class UserService : IUserService
                 else
                 {
                     var errorString = GetIdentityErrorString(result.Errors.ToList());
-                    _logger.LogError("{nameMethod}: Пользователь {Email} не зарегистрирован. Reson: {errorString}", nameof(RegisterUserAsync), regUser.Email, errorString);
+                    _logger.LogError("{nameMethod}: Пользователь {Email} не зарегистрирован. Reson: {errorString}",
+                        nameof(RegisterUserAsync), regUser.Email, errorString);
                     return new ResponseModelCore
                     {
-                        Header = new() { Error = $"Пользователь {regUser.Email} не зарегистрирован. Reson: {errorString}", StatusCode = 500 },
+                        Header = new()
+                        {
+                            Error = $"Пользователь {regUser.Email} не зарегистрирован. Reson: {errorString}",
+                            StatusCode = 500
+                        },
                     };
                 }
             }
             else
             {
                 var reason = $"{userName} - никнейм уже занят!";
-                _logger.LogError("{nameMethod}: Пользователь {Email} не зарегистрирован. Reson: {errorString}", nameof(RegisterUserAsync), email, reason);
+                _logger.LogError("{nameMethod}: Пользователь {Email} не зарегистрирован. Reson: {errorString}",
+                    nameof(RegisterUserAsync), email, reason);
                 return new ResponseModelCore
                 {
-                    Header = new() { Error = $"Пользователь {email} не зарегистрирован. Reson: {reason}", StatusCode = 400 },
+                    Header = new()
+                        { Error = $"Пользователь {email} не зарегистрирован. Reson: {reason}", StatusCode = 400 },
                 };
             }
         }
         else
         {
             var reason = $"{userName} - никнейм уже занят!";
-            _logger.LogError("{nameMethod}: Пользователь {Email} не зарегистрирован. Reson: {errorString}", nameof(RegisterUserAsync), email, reason);
+            _logger.LogError("{nameMethod}: Пользователь {Email} не зарегистрирован. Reson: {errorString}",
+                nameof(RegisterUserAsync), email, reason);
             return new ResponseModelCore
             {
-                Header = new() { Error = $"Пользователь {email} не зарегистрирован. Reson: {reason}", StatusCode = 400 },
+                Header = new()
+                    { Error = $"Пользователь {email} не зарегистрирован. Reson: {reason}", StatusCode = 400 },
             };
         }
     }
+
     /// <summary>
     /// Проверяет свободно ли имя пользователя
     /// </summary>
@@ -302,12 +344,24 @@ public class UserService : IUserService
     /// <returns>Вернет <b>true</b>, если имя свободно и <b>false</b>, если не свободно</returns>
     public async Task<bool> UserNameIsFreeAsync(string username)
     {
+        if (string.IsNullOrEmpty(username))
+        {
+            return false;
+        }
         if (username.Length < 3)
         {
             return false;
         }
-        return await _userRepository.UserNameIsFreeAsync(username);
+
+        var result = await _userManager.FindByNameAsync(username);
+        if (result != null)
+        {
+            return false;
+        }
+
+        return true;
     }
+
     /// <summary>
     /// Отправить инструкции на почту по восстановлению пароля
     /// </summary>
@@ -316,24 +370,49 @@ public class UserService : IUserService
     /// <returns>Возвращает объект ответа</returns>
     public async Task<ResponseModelCore> RecoveryPasswordSend(string email, string url)
     {
-        email = email.ToLower();
-        var user = await _userManager.FindByNameAsync(email);
-        if(user == null)
+        if (string.IsNullOrEmpty(email))
         {
-            _logger.LogError("{nameMethod}: Пользователь, с почтовым ящиком: {Email}, не зарегистрирован в системе. Восстановить пароль для данного пользователя невозможно", nameof(RecoveryPasswordSend), email);
+            return new ResponseModelCore
+            {
+                Header = new()
+                {
+                    Error = "Восстановление пароля невозможно. Reason: Email не может быть пустым или равным null",
+                    StatusCode = 400
+                }
+            };
+        }
+        if (string.IsNullOrEmpty(url))
+        {
+            return new ResponseModelCore
+            {
+                Header = new()
+                {
+                    Error = "Восстановление пароля невозможно. Reason: URL не может быть пустым или равным null",
+                    StatusCode = 400
+                }
+            };
+        }
+        var user = await _userManager.FindByNameAsync(email);
+        if (user == null)
+        {
+            _logger.LogError(
+                "{nameMethod}: Пользователь, с почтовым ящиком: {Email}, не зарегистрирован в системе. Восстановить пароль для данного пользователя невозможно",
+                nameof(RecoveryPasswordSend), email);
             return new ResponseModelCore
             {
                 Header = new() { Error = string.Empty, StatusCode = 200 },
-                Body = new ()
+                Body = new()
                 {
                     Message = "На указанную Вами почту отправлены инструкции для восстановления пароля"
                 }
             };
         }
+
         var code = await _userManager.GeneratePasswordResetTokenAsync(user);
         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
         var urlCallback = $"{url}{user.Id}/{code}";
-        var resultSendEmail = await _emailService.SendEmailAsync(user.Email!, "Восстановление пароля", "Подтвердите вашу учетную запись, кликнув <a href=\"" + urlCallback + "\">здесь</a>");
+        var resultSendEmail = await _emailService.SendEmailAsync(user.Email!, "Восстановление пароля",
+            "Подтвердите вашу учетную запись, кликнув <a href=\"" + urlCallback + "\">здесь</a>");
         if (resultSendEmail.IsSending)
         {
             return new ResponseModelCore
@@ -352,11 +431,13 @@ public class UserService : IUserService
                 Header = new() { Error = string.Empty, StatusCode = resultSendEmail.StatusCode },
                 Body = new()
                 {
-                    Message = $"Не удалось отправить инструкции по восстановлению пароля на указанную Вами почту. Возможно, были допущены опечатки при вводе адреса эл. почты? Error: {resultSendEmail.StatusCode}"
+                    Message =
+                        $"Не удалось отправить инструкции по восстановлению пароля на указанную Вами почту. Возможно, были допущены опечатки при вводе адреса эл. почты? Error: {resultSendEmail.StatusCode}"
                 }
             };
         }
     }
+
     /// <summary>
     /// Сменить пароль на новый
     /// </summary>
@@ -366,12 +447,49 @@ public class UserService : IUserService
     /// <returns>Возвращает объект ответа</returns>
     public async Task<ResponseModelCore> RecoveryPassword(string userId, string inputСode, string newPass)
     {
+        if (string.IsNullOrEmpty(userId))
+        {
+            return new ResponseModelCore
+            {
+                Header = new()
+                {
+                    Error = "Смена пароля невозможна. Reason: userId не может быть пустым или равным null",
+                    StatusCode = 400
+                }
+            };
+        }
+
+        if (string.IsNullOrEmpty(inputСode))
+        {
+            return new ResponseModelCore
+            {
+                Header = new()
+                {
+                    Error = "Смена пароля невозможна. Reason: Token не может быть пустым или равным null",
+                    StatusCode = 400
+                }
+            };
+        }
+
+        if (string.IsNullOrEmpty(newPass))
+        {
+            return new ResponseModelCore
+            {
+                Header = new()
+                {
+                    Error = "Смена пароля невозможна. Reason: Новый пароль не может быть пустым или равным null",
+                    StatusCode = 400
+                }
+            };
+        }
+        
         try
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                _logger.LogError("{method} Не удалось получить пользователя по его идентификатору: {id}", nameof(RecoveryPassword), userId);
+                _logger.LogError("{method} Не удалось получить пользователя по его идентификатору: {id}",
+                    nameof(RecoveryPassword), userId);
                 return new ResponseModelCore
                 {
                     Header = new()
@@ -381,8 +499,9 @@ public class UserService : IUserService
                     }
                 };
             }
-            var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(inputСode));
-            var result = await _userManager.ResetPasswordAsync(user!, code, newPass);
+
+            //var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(inputСode));
+            var result = await _userManager.ResetPasswordAsync(user!, inputСode, newPass);
             if (result.Succeeded)
             {
                 return new ResponseModelCore
@@ -401,7 +520,8 @@ public class UserService : IUserService
             else
             {
                 var errorStr = GetIdentityErrorString(result.Errors.ToList());
-                _logger.LogError("{method} Не удалось сменить пароль для аккаунта {accont}. Reason: {reason}", nameof(RecoveryPassword), user.Email, errorStr);
+                _logger.LogError("{method} Не удалось сменить пароль для аккаунта {accont}. Reason: {reason}",
+                    nameof(RecoveryPassword), user.Email, errorStr);
                 return new ResponseModelCore
                 {
                     Header = new()
@@ -416,9 +536,10 @@ public class UserService : IUserService
                 };
             }
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
-            _logger.LogError(ex, "{method} Не удалось сменить пароль для аккаунта c Id: {accont}. Reason: {reason}", nameof(RecoveryPassword), userId, ex.Message);
+            _logger.LogError(ex, "{method} Не удалось сменить пароль для аккаунта c Id: {accont}. Reason: {reason}",
+                nameof(RecoveryPassword), userId, ex.Message);
             return new ResponseModelCore
             {
                 Header = new()
@@ -433,6 +554,7 @@ public class UserService : IUserService
             };
         }
     }
+
     /// <summary>
     /// Получить роли пользователя
     /// </summary>
@@ -441,13 +563,15 @@ public class UserService : IUserService
     public async Task<string[]> GetUserRolesAsync(string userId)
     {
         var user = await _userManager.FindByIdAsync(userId);
-        if(user == null)
+        if (user == null)
         {
-            return null;
+            return null!;
         }
+
         var roles = await _userManager.GetRolesAsync(user);
         return roles.ToArray();
     }
+
     /// <summary>
     /// Имеются ли роли у пользователя?
     /// </summary>
@@ -456,17 +580,19 @@ public class UserService : IUserService
     /// <returns>Верент <b>true</b>,  если роли у пользователя имеются и <b>false</b>, если ни одной роли пользователь не имеет</returns>
     public async Task<bool> IsRolesAllowedAsync(string? userId, List<string> inputRoles)
     {
-        var user = await _userManager.FindByIdAsync(userId);
+        var user = await _userManager.FindByIdAsync(userId!);
         if (user == null)
         {
             return false;
         }
+
         var roles = await _userManager.GetRolesAsync(user);
         var intersect = roles.Intersect(inputRoles).ToArray();
-        if(intersect.Length > 0)
+        if (intersect.Length > 0)
         {
             return true;
         }
+
         return false;
     }
 
@@ -493,21 +619,29 @@ public class UserService : IUserService
                     sb.Append($"{error.Description}");
                 }
             }
+
             counter++;
         }
+
         return sb.ToString();
     }
+
     /// <summary>
-    /// Проверяет не запрещен ли никнейм для регистрации
+    /// Проверяет, запрещен ли никнейм для регистрации.
     /// </summary>
-    /// <param name="nickName">Проверяемый никнейм</param>
-    /// <returns>Вернет <b>true</b>, если никнейм запрещен и <b>false</b>, если разрешен</returns>
+    /// <param name="nickName">Никнейм, который необходимо проверить.</param>
+    /// <returns>
+    /// Возвращает <c>true</c>, если никнейм запрещен, в противном случае возвращает <c>false</c>.
+    /// </returns>
     private bool IsStopNickName(ReadOnlySpan<char> nickName)
     {
-        if(nickName.IndexOf("Admin") >= 0 || nickName.IndexOf("admin") >= 0)
+        // Проверяет, содержит ли никнейм "Admin" или "admin"
+        if (nickName.IndexOf("Admin") >= 0 || nickName.IndexOf("admin") >= 0)
         {
             return true;
         }
+
+        // Если никнейм не содержит "Admin" или "admin", он разрешен
         return false;
     }
 }

@@ -8,7 +8,7 @@ using NailStore.Data.Models;
 
 namespace NailStore.Repositories;
 
-public class ServiceRepository: IServiceRepository
+public class ServiceRepository: IServiceRepository<Guid>
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<ServiceRepository> _logger;

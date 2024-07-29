@@ -5,7 +5,7 @@ namespace NailStore.Core.Interfaces;
 /// <summary>
 /// Сервис для работы с услугами
 /// </summary>
-public interface IProviderService
+public interface IProviderService<T>
 {
     /// <summary>
     /// Добавить услугу
@@ -17,7 +17,7 @@ public interface IProviderService
     /// <param name="price">Стоимость услуги</param>
     /// <param name="durationTime">Длительность процедуры</param>
     /// <returns>Вернет объект ответа</returns>
-    Task<ResponseModelCore> AddServiceAsync(Guid userId, int categoryId, string serviceName, string[] descs, decimal price, short durationTime);
+    Task<ResponseModelCore> AddServiceAsync(T userId, int categoryId, string serviceName, string[] descs, decimal price, short durationTime);
 
     /// <summary>
     /// Получить все услуги для категории по ее идентификатору
@@ -33,5 +33,5 @@ public interface IProviderService
     /// <param name="serviceId">Идентификатор услуги</param>
     /// <param name="userId">Идентификатор пользователя</param>
     /// <returns></returns>
-    Task<ResponseModelCore> RemoveServiceAsync(int serviceId, Guid userId);
+    Task<ResponseModelCore> RemoveServiceAsync(int serviceId, T userId);
 }
