@@ -1,5 +1,6 @@
 ﻿using NailStore.Core.Interfaces;
 using NailStore.Core.Models;
+using NailStore.Repositories;
 
 namespace NailStore.Application;
 
@@ -11,6 +12,7 @@ public class ProviderService : IProviderService<Guid>
     {
         _serviceRepository = serviceRepository;
     }
+    
     /// <summary>
     /// Добавить услугу
     /// </summary>
@@ -23,6 +25,29 @@ public class ProviderService : IProviderService<Guid>
     /// <returns>Вернет объект ответа</returns>
     public async Task<ResponseModelCore> AddServiceAsync(Guid userId, int categoryId, string serviceName, string[] descs, decimal price, short durationTime)
     {
+        if (price < 0)
+        {
+            return new ResponseModelCore
+            {
+                Header = new()
+                {
+                    Error = "Стоимость услуги не может быть отрицательной",
+                    StatusCode = 400
+                }
+            };
+        }
+
+        if (durationTime < 0)
+        {
+            return new ResponseModelCore
+            {
+                Header = new()
+                {
+                    Error = "Длительность процедуры не может быть отрицательной",
+                    StatusCode = 400
+                }
+            };
+        }
         return await _serviceRepository.AddServiceAsync(userId, categoryId, serviceName, descs, price, durationTime);
     }
     /// <summary>
@@ -35,6 +60,22 @@ public class ProviderService : IProviderService<Guid>
     public async Task<ResponseModelCore> GetServicesByCategoryAsync(int categoryId, int pageNumber, int pageSize)
     {
         return await _serviceRepository.GetServicesByCategoryAsync(categoryId, pageNumber, pageSize);
+    }
+
+    /// <summary>
+    /// Получает все услуги, принадлежащие определенному пользователю, с поддержкой пагинации.
+    /// </summary>
+    /// <param name="userId">Уникальный идентификатор пользователя, чьи услуги необходимо получить.</param>
+    /// <param name="pageNumber">Номер страницы для получения. Если меньше или равно 0, по умолчанию используется 1.</param>
+    /// <param name="pageSize">Количество записей на странице. Если меньше или равно 0, по умолчанию используется 10. Если больше 15, то устанавливается 15.</param>
+    /// <returns>
+    /// Задача, представляющая асинхронную операцию. Результатом задачи является объект <see cref="ResponseModelCore"/> со следующими свойствами:
+    /// - <see cref="ResponseModelCore.Header"/>: Содержит код состояния HTTP и сообщение об ошибке, если таковое имеется.
+    /// - <see cref="ResponseModelCore.Body"/>: Содержит полученные услуги и информацию о пагинации.
+    /// </returns>
+    public async Task<ResponseModelCore> GetAllServicesByUserIdAsync(Guid userId, int pageNumber, int pageSize)
+    {
+        return await _serviceRepository.GetAllServicesByUserIdAsync(userId, pageNumber, pageSize);
     }
 
     /// <summary>

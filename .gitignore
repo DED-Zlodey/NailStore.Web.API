@@ -362,3 +362,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /NailStore.Web.API/appsettings.Development.json
+*appsettings.Development.json
+/NailStore.xUnit.Tests/appsettings.Development.json
