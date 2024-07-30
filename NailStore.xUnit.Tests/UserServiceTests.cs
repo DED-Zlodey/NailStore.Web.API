@@ -171,11 +171,6 @@ public class UserServiceTests
         const string userName = "testuser";
         const string email = "test@example.com";
         const string password = "Test123!";
-        var response = new EmailServiceResultModel
-        {
-            IsSending = false,
-            MessageResultSending = string.Empty,
-        };
         _userManagerMock.Setup(x => x.CreateAsync(It.IsAny<UserEntity>(), It.IsAny<string>()))
             .ReturnsAsync(IdentityResult.Success);
         _userManagerMock.Setup(x => x.GenerateEmailConfirmationTokenAsync(It.IsAny<UserEntity>()))

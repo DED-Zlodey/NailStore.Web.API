@@ -34,5 +34,18 @@ namespace NailStore.Core.Interfaces
         /// <param name="userId">Идентификатор пользователя</param>
         /// <returns></returns>
         Task<ResponseModelCore> RemoveServiceAsync(int serviceId, T userId);
+
+        /// <summary>
+        /// Получает все услуги, принадлежащие определенному пользователю, с поддержкой пагинации.
+        /// </summary>
+        /// <param name="userId">Уникальный идентификатор пользователя, чьи услуги необходимо получить.</param>
+        /// <param name="pageNumber">Номер страницы для получения. Если меньше или равно 0, по умолчанию используется 1.</param>
+        /// <param name="pageSize">Количество записей на странице. Если меньше или равно 0, по умолчанию используется 10. Если больше 15, то устанавливается 15.</param>
+        /// <returns>
+        /// Задача, представляющая асинхронную операцию. Результатом задачи является объект <see cref="ResponseModelCore"/> со следующими свойствами:
+        /// - <see cref="ResponseModelCore.Header"/>: Содержит код состояния HTTP и сообщение об ошибке, если таковое имеется.
+        /// - <see cref="ResponseModelCore.Body"/>: Содержит полученные услуги и информацию о пагинации.
+        /// </returns>
+        Task<ResponseModelCore> GetAllServicesByUserIdAsync(T userId, int pageNumber, int pageSize);
     }
 }
