@@ -34,9 +34,10 @@ namespace NailStore.Web.API.Controllers
             _jwtService = jWtManager;
             _userService = userService;
         }
-
+        
         /// <summary>
-        /// Добавить услугу
+        /// Добавляет услугу.
+        /// Метод доступен только авторизованным пользователям.
         /// </summary>
         /// <remarks>
         ///     {
@@ -56,8 +57,13 @@ namespace NailStore.Web.API.Controllers
         ///        ]
         ///     }
         /// </remarks> 
-        /// <param name="model">Модель услуги</param>
-        /// <returns></returns>
+        /// <param name="model">Модель услуги.</param>
+        /// <returns>
+        /// Возвращает сообщение об успешном добавлении, если все операции прошли успешно.
+        /// Возвращает ошибку 400 Bad Request, если не удалось распознать пользователя.
+        /// Возвращает ошибку с описанием причины, если при вызове сервиса возникли ошибки.
+        /// Возвращает ошибку 403 Forbidden, если у пользователя нет необходимой роли для добавления услуги.
+        /// </returns>
         [HttpPost]
         [Authorize]
         public async Task<ActionResult<string>> AddServiceAsync([FromBody] ServiceModelDTO model)
@@ -99,14 +105,15 @@ namespace NailStore.Web.API.Controllers
                 instance: HttpContext.Request.Path
             );
         }
-
         /// <summary>
-        /// Получить все услуги для определенной категории
+        /// Получает все услуги для определенной категории.
         /// </summary>
-        /// <param name="categoryId">Идентификатор категории</param>
-        /// <param name="pageNumber"></param>
-        /// <param name="pageSize"></param>
-        /// <returns></returns>
+        /// <param name="categoryId">Идентификатор категории.</param>
+        /// <param name="pageNumber">Номер страницы для пагинации.</param>
+        /// <param name="pageSize">Количество элементов на странице.</param>
+        /// <returns>
+        /// Возвращает список услуг, если все операции прошли успешно.
+        /// </returns>
         [HttpGet]
         public async Task<ActionResult<GetServicesDTO>> GetServicesByCategoryIdAsync(int categoryId, int pageNumber,
             int pageSize)
@@ -116,28 +123,39 @@ namespace NailStore.Web.API.Controllers
         }
 
         /// <summary>
-        /// Удалить услугу по ее идентификатору. Удалить можно только свою услугу!
+        /// Метод для получения всех услуг, привязанных к определенному пользователю, с поддержкой пагинации.
+        /// Метод доступен только авторизованным пользователям.
         /// </summary>
-        /// <param name="model">Модель удаления услуги</param>
-        /// <returns></returns>
-        [HttpDelete]
+        /// <param name="pageNumber">Номер страницы для пагинации.</param>
+        /// <param name="pageSize">Количество элементов на странице.</param>
+        /// <returns>
+        /// Возвращает список услуг, если все операции прошли успешно.
+        /// Возвращает ошибку 400 Bad Request, если не удалось распознать пользователя.
+        /// Возвращает ошибку с описанием причины, если при вызове сервиса возникли ошибки.
+        /// </returns>
+        [HttpGet]
         [Authorize]
-        public async Task<ActionResult<string>> DeleteService([FromBody] DeleteServiceModelDTO model)
+        [Route("GetAllServicesByUser/{pageNumber}/{pageSize}")]
+        public async Task<ActionResult<GetServicesDTO>> GetAllServicesByUserIdAsync(int pageNumber, int pageSize)
         {
+            // Получение идентификатора пользователя из токена в заголовке запроса
             var userId = GetUserIdByToken();
             if (string.IsNullOrEmpty(userId))
             {
-                return BadRequest("Не удалось распознать пользователя");
+                // Если идентификатор пользователя не получен, возвращается ошибка 400 Bad Request
+                return Problem
+                (
+                    detail: "Не удалось распознать пользователя выполняющего запрос",
+                    statusCode: StatusCodes.Status400BadRequest,
+                    instance: HttpContext.Request.Path
+                );
             }
 
-            if (await _userService.IsRolesAllowedAsync(userId, new List<string> { "Admin", "Master" }))
+            // Вызов метода сервиса для получения всех услуг пользователя с учетом пагинации
+            var result = await _providerService.GetAllServicesByUserIdAsync(Guid.Parse(userId), pageNumber, pageSize);
+            if (result.Header.StatusCode != 200)
             {
-                var result = await _providerService.RemoveServiceAsync(model.ServiceId, Guid.Parse(userId));
-                if (result.Header.StatusCode == 200)
-                {
-                    return Ok(result.Body.Message);
-                }
-
+                // Если при вызове сервиса возникли ошибки, возвращается ошибка с описанием причины
                 return Problem
                 (
                     detail: result.Header.Error,
@@ -146,6 +164,51 @@ namespace NailStore.Web.API.Controllers
                 );
             }
 
+            // Если все операции прошли успешно, возвращается список услуг
+            return Ok(result.Body.GetServices);
+        }
+        
+        /// <summary>
+        /// Удалить услугу по ее идентификатору. Удалить можно только свою услугу!
+        /// Метод доступен только авторизованным пользователям.
+        /// </summary>
+        /// <param name="model">Модель удаления услуги</param>
+        /// <returns>
+        /// Возвращает сообщение об успешном удалении, если все операции прошли успешно.
+        /// Возвращает ошибку 400 Bad Request, если не удалось распознать пользователя.
+        /// Возвращает ошибку с описанием причины, если при вызове сервиса возникли ошибки.
+        /// Возвращает ошибку 403 Forbidden, если у пользователя нет необходимой роли для удаления услуги.
+        /// </returns>
+        [HttpDelete]
+        [Authorize]
+        public async Task<ActionResult<string>> DeleteService([FromBody] DeleteServiceModelDTO model)
+        {
+            var userId = GetUserIdByToken();
+            if (string.IsNullOrEmpty(userId))
+            {
+                // Если идентификатор пользователя не получен, возвращается ошибка 400 Bad Request
+                return BadRequest("Не удалось распознать пользователя");
+            }
+
+            if (await _userService.IsRolesAllowedAsync(userId, new List<string> { "Admin", "Master" }))
+            {
+                var result = await _providerService.RemoveServiceAsync(model.ServiceId, Guid.Parse(userId));
+                if (result.Header.StatusCode == 200)
+                {
+                    // Если услуга успешно удалена, возвращается сообщение об успехе
+                    return Ok(result.Body.Message);
+                }
+
+                // Если при вызове сервиса возникли ошибки, возвращается ошибка с описанием причины
+                return Problem
+                (
+                    detail: result.Header.Error,
+                    statusCode: result.Header.StatusCode,
+                    instance: HttpContext.Request.Path
+                );
+            }
+
+            // Если у пользователя нет необходимой роли для удаления услуги, возвращается ошибка 403 Forbidden
             return Problem
             (
                 detail: "Для доступа к ресурсу нет необходимой роли.",
@@ -153,11 +216,12 @@ namespace NailStore.Web.API.Controllers
                 instance: HttpContext.Request.Path
             );
         }
-
         /// <summary>
         /// На основании токена переданного в заголовке возвращает идентификатор пользователя.
         /// </summary>
-        /// <returns>Возвращает идентификатор пользователя или  <b>null</b></returns>
+        /// <returns>
+        /// Возвращает идентификатор пользователя или <c>null</c>, если не удалось получить идентификатор.
+        /// </returns>
         private string? GetUserIdByToken()
         {
             try
@@ -165,6 +229,7 @@ namespace NailStore.Web.API.Controllers
                 var result = HttpContext.GetPayloadForTokenAsync(_jwtService);
                 if (result == null)
                 {
+                    // Если не удалось получить пользователя из токена в заголовке, null. В журнал записывается соответствующая запись.
                     _logger.LogError("{method} Не удалось получить пользователя из токена в заголовке. result == null",
                         nameof(GetUserIdByToken));
                     return null;
@@ -172,20 +237,23 @@ namespace NailStore.Web.API.Controllers
 
                 if (result.Payload == null)
                 {
+                    // Если не удалось получить пользователя из токена в заголовке, null. В журнал записывается соответствующая запись.
                     _logger.LogError(
                         "{method} Не удалось получить пользователя из токена в заголовке. result.Payload == null",
                         nameof(GetUserIdByToken));
                     return null;
                 }
+
+                // Если удалось получить пользователя из токена в заголовке, возвращается его идентификатор
                 return result.Payload!.GetValueOrDefault("Id")!.ToString()!;
             }
             catch (Exception ex)
             {
+                // Если при получении пользователя из токена в заголовке возникла ошибка, возвращается null. В журнал записывается соответствующая запись.
                 _logger.LogError(ex,
                     "{method} Не удалось получить пользователя из токена в заголовке. Reason: {reason}",
                     nameof(GetUserIdByToken), ex.Message);
                 return null;
             }
-        }
-    }
+        }    }
 }
