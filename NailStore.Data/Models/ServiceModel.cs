@@ -29,7 +29,7 @@ public class ServiceModel
     /// <summary>
     /// Навигационное свойство пользовтаеля, которому принадлежит услуга
     /// </summary>
-    public UserEntity User { get; set; }
+    public UserEntity? User { get; set; }
     /// <summary>
     /// Список параграфов для описания услуги
     /// </summary>
@@ -39,9 +39,9 @@ public class ServiceModel
     /// </summary>
     public CategoryServiceModel Category { get; set; }
     /// <summary>
-    /// Город в котором предоставляется услуга
+    /// Города, в которых предоставляется услуга
     /// </summary>
-    public string City { get; set; }
+    public List<City> Cities { get; set; }
     /// <summary>
     /// Краткое описание услуги
     /// </summary>

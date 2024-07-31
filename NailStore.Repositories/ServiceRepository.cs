@@ -85,7 +85,6 @@ public class ServiceRepository : IServiceRepository<Guid>
                 ServiceName = serviceName,
                 UserId = userId,
                 CategoryId = categoryId,
-                City = "New City",
                 DescriptionService = "Описание услуги",
                 ServiceDescriptions = descriptions
             });

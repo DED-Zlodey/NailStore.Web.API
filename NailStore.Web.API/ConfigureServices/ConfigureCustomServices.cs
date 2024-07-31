@@ -16,6 +16,7 @@ using System.Text;
 using MailKit;
 using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.HttpOverrides;
+using Npgsql;
 
 namespace NailStore.Web.API.ConfigureServices;
 
@@ -76,7 +77,10 @@ public struct ConfigureCustomServices
     public void ConfigureDBServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("PostgreConnection")));
+            options.UseNpgsql(configuration.GetConnectionString("PostgreConnection"), o =>
+            {
+                o.UseNetTopologySuite();
+            }));
     }
 
     /// <summary>
