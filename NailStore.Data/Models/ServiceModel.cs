@@ -17,7 +17,7 @@ public class ServiceModel
     /// <summary>
     /// Наименование услуги
     /// </summary>
-    public string ServiceName { get; set; }
+    public string? ServiceName { get; set; }
     /// <summary>
     /// Длительность процедуры в минутах
     /// </summary>
@@ -33,17 +33,17 @@ public class ServiceModel
     /// <summary>
     /// Список параграфов для описания услуги
     /// </summary>
-    public List<ServiceDescriptionModel> ServiceDescriptions { get; set; }
+    public List<ServiceDescriptionModel>? ServiceDescriptions { get; set; }
     /// <summary>
     /// Категория которой принадлежит данная услуга
     /// </summary>
-    public CategoryServiceModel Category { get; set; }
+    public CategoryServiceModel? Category { get; set; }
     /// <summary>
     /// Города, в которых предоставляется услуга
     /// </summary>
-    public List<City> Cities { get; set; }
+    public List<City>? Cities { get; set; }
     /// <summary>
     /// Краткое описание услуги
     /// </summary>
-    public string DescriptionService { get; set; }
+    public string? DescriptionService { get; set; }
 }

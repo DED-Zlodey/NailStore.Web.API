@@ -11,7 +11,7 @@ public class City
     /// <summary>
     /// Уникальный идентификатор города.
     /// </summary>
-    public int CityId { get; set; }
+    public int Id { get; set; }
 
     /// <summary>
     /// Идентификатор региона, к которому принадлежит город.

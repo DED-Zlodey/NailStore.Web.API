@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using System.Diagnostics;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,11 +14,8 @@ using NailStore.Repositories;
 using Serilog;
 using System.Reflection;
 using System.Text;
-using MailKit;
 using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.HttpOverrides;
-using NailStore.Application.Interfaces;
-using Npgsql;
 
 namespace NailStore.Web.API.ConfigureServices;
 
@@ -66,6 +64,8 @@ public struct ConfigureCustomServices
             .AddSingleton<IEmailService, EmailService>()
             .AddScoped<IProviderService<Guid>, ProviderService>()
             .AddScoped<IServiceRepository<Guid>, ServiceRepository>()
+            .AddScoped<ICountryService, CountryService>()
+            .AddScoped<ICountryRepository, CountryRepository>()
             .AddSingleton<SmtpClient>()
             ;
     }
@@ -81,7 +81,7 @@ public struct ConfigureCustomServices
             options.UseNpgsql(configuration.GetConnectionString("PostgreConnection"), o =>
             {
                 o.UseNetTopologySuite();
-            }));
+            }).LogTo(Console.WriteLine, LogLevel.Information));
     }
 
     /// <summary>

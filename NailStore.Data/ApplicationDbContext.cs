@@ -49,7 +49,7 @@ public class ApplicationDbContext : IdentityDbContext<UserEntity, IdentityRole<G
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-        //Database.EnsureCreated();
+        
     }
 
     /// <summary>

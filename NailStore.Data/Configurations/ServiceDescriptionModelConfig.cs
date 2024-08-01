@@ -31,6 +31,7 @@ public class ServiceDescriptionModelConfig : IEntityTypeConfiguration<ServiceDes
 
         // Настраивает сопоставление столбца для свойства Text
         ent.Property(x => x.Text).HasColumnName("text").HasMaxLength(500).IsRequired();
+        
 
         // Создает индекс на столбце DescriptionId для повышения производительности запросов
         ent.HasIndex(x => x.DescriptionId);

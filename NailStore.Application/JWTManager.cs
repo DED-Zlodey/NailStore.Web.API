@@ -3,24 +3,23 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NailStore.Application.Settings;
-using NailStore.Core.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using NailStore.Application.Interfaces;
-using NailStore.Application.ModelsDTO;
+using NailStore.Core.Interfaces;
+using NailStore.Data.Models;
 
 namespace NailStore.Application;
 
 public class JWTManager : IJWTManager
 {
     private readonly ILogger<JWTManager> _logger;
-    private readonly IUserService _userService;
+    private readonly UserManager<UserEntity> _userManager;
     private readonly SrvSettings _settings;
-    public JWTManager(ILogger<JWTManager> logger, IOptions<SrvSettings> srvSettings, IUserService userService)
+    public JWTManager(ILogger<JWTManager> logger, IOptions<SrvSettings> srvSettings, UserManager<UserEntity> userManager)
     {
         _logger = logger;
-        _userService = userService;
+        _userManager = userManager;
         _settings = srvSettings.Value;
     }
     public ClaimsPrincipal GetPrincipal(string token)
@@ -31,15 +30,15 @@ public class JWTManager : IJWTManager
             var jwtToken = GetJwtToken(token);
             if (jwtToken == null)
             {
-                return null;
+                return null!;
             }
             if (!jwtToken.Header.Alg.Equals("HS256"))
             {
-                return null;
+                return null!;
             }
             if (!jwtToken.Header.Typ.Equals("JWT"))
             {
-                return null;
+                return null!;
             }
             var validationParameters = new TokenValidationParameters()
             {
@@ -57,7 +56,7 @@ public class JWTManager : IJWTManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "{method}: Что-то пошло не так. JWT Token: {token} Reason: {message}", nameof(GetPrincipal), token, ex.Message);
-            return null;
+            return null!;
         }
     }
     private bool LifetimeValidator(DateTime? notBefore, DateTime? expires, SecurityToken securityToken, TokenValidationParameters validationParameters)
@@ -89,7 +88,7 @@ public class JWTManager : IJWTManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "{method}: Не удалось прочитать JWT Token: {token} Reason: {message}", nameof(GetJwtToken), token, ex.Message);
-            return null;
+            return null!;
         }
     }
     public SymmetricSecurityKey GetSymmetricSecurityKey(string key)
@@ -101,9 +100,9 @@ public class JWTManager : IJWTManager
     /// </summary>
     /// <param name="user"></param>
     /// <returns>Возвращает мастер-токен</returns>
-    public async Task<string> GetBearerTokenAsync(UserDTO user)
+    public async Task<string> GetBearerTokenAsync(string userId)
     {
-        var identity = await GetIdentityCaimsAsync(user);
+        var identity = await GetIdentityCaimsAsync(userId);
         var now = DateTime.Now;
         var jwt = new JwtSecurityToken(
                 issuer: "NailStoreApi",
@@ -114,13 +113,18 @@ public class JWTManager : IJWTManager
                 signingCredentials: new SigningCredentials(GetSymmetricSecurityKey(_settings.ServerKey!), SecurityAlgorithms.HmacSha256));
         return new JwtSecurityTokenHandler().WriteToken(jwt);
     }
-    public async Task<ClaimsIdentity> GetIdentityCaimsAsync(UserDTO user)
+    public async Task<ClaimsIdentity> GetIdentityCaimsAsync(string userId)
     {
-        var userRoles = await _userService.GetUserRolesAsync(user.userId.ToString());
         var claims = new List<Claim>
         { 
-            new Claim("Id", user.userId.ToString()), 
+            new("Id", userId), 
         };
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return new ClaimsIdentity(claims, "Token");
+        }
+        var userRoles = await _userManager.GetRolesAsync(user);
         foreach (var role in userRoles)
         {
             claims.Add(new Claim("Role", role));

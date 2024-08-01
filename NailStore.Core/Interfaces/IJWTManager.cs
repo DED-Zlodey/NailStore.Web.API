@@ -1,8 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using NailStore.Application.ModelsDTO;
 
-namespace NailStore.Application.Interfaces
+namespace NailStore.Core.Interfaces
 {
     public interface IJWTManager
     {
@@ -23,7 +22,7 @@ namespace NailStore.Application.Interfaces
         /// </summary>
         /// <param name="user">Пользователь</param>
         /// <returns></returns>
-        Task<string> GetBearerTokenAsync(UserDTO user);
+        Task<string> GetBearerTokenAsync(string userId);
         /// <summary>
         /// Получить полезную нагрузку из токена
         /// </summary>

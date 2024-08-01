@@ -18,9 +18,9 @@ public class Program
             {
                 using (var scope = host.Services.CreateScope())
                 {
-                    AppInit init = new AppInit();
                     var serviceProvider = scope.ServiceProvider;
-                    task = init.InitializeAsync(serviceProvider);
+                    AppInit init = new AppInit(serviceProvider);
+                    task = init.InitializeAsync();
                     task.Wait();
                 }
             }

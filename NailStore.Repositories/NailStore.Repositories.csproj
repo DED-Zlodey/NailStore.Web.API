@@ -11,4 +11,8 @@
     <ProjectReference Include="..\NailStore.Data\NailStore.Data.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Riok.Mapperly" Version="3.6.0" />
+  </ItemGroup>
+
 </Project>

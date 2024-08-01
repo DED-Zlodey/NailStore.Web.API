@@ -26,14 +26,17 @@ public class ServiceModelConfig : IEntityTypeConfiguration<ServiceModel>
         // Настраивает сопоставление столбца для свойства CategoryId
         ent.Property(x => x.CategoryId).HasColumnName("category_id");
         // Настраивает сопоставление столбца для свойства ServiceName
-        ent.Property(x => x.ServiceName).HasColumnName("service_name").HasMaxLength(70);
+        ent.Property(x => x.ServiceName).HasColumnName("service_name").HasMaxLength(70).IsRequired();
         // Настраивает сопоставление столбца для свойства UserId
         ent.Property(x => x.UserId).HasColumnName("user_id");
         // Настраивает сопоставление столбца для свойства DurationTime
         ent.Property(x => x.DurationTime).HasColumnName("duration");
+        // Устанавливает ограничение на поле DurationTime
+        ent.ToTable(x => x.HasCheckConstraint("ck_service_duration", "duration > 0"));
         // Настраивает сопоставление столбца для свойства Price
         ent.Property(x => x.Price).HasColumnName("price");
-
+        // Устанавливает ограничение на поле Price
+        ent.ToTable(x => x.HasCheckConstraint("ck_service_price", "price > 0"));
         // Настраивает сопоставление столбца для свойства DescriptionService
         ent.Property(x => x.DescriptionService).HasColumnName("description_service").HasMaxLength(300);
 

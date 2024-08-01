@@ -6,8 +6,6 @@ using NailStore.Core.Models;
 using NailStore.Data.Models;
 using System.Runtime.InteropServices;
 using System.Text;
-using NailStore.Application.Interfaces;
-using NailStore.Application.Mapping;
 
 namespace NailStore.Application;
 
@@ -130,8 +128,7 @@ public class UserService : IUserService
             var result = await _signInManager.CheckPasswordSignInAsync(user, password, true);
             if (result.Succeeded)
             {
-                var userDTO = Mapper.MapTo(user);
-                var token = await _jwtManager.GetBearerTokenAsync(userDTO);
+                var token = await _jwtManager.GetBearerTokenAsync(user.Id.ToString());
                 return new ResponseModelCore
                 {
                     Header = new()
@@ -157,7 +154,7 @@ public class UserService : IUserService
                             Header = new()
                             {
                                 Error =
-                                    $"Из-за превышения неудачных попыток входа, пользователь заблокирован до {lockoutEndDate.Result.Value.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss")} UTC+8",
+                                    $"Из-за превышения неудачных попыток входа, пользователь заблокирован до {lockoutEndDate.Result!.Value.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss")} UTC+8",
                                 StatusCode = 403,
                             },
                             Body = new()

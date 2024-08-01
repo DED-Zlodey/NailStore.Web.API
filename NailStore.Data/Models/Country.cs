@@ -9,13 +9,13 @@ public class Country
     /// <summary>
     /// Уникальный идентификатор страны.
     /// </summary>
-    public int CountryId { get; set; }
+    public int Id { get; set; }
 
     /// <summary>
     /// Название страны.
     /// Свойство обязательно для заполнения при создании нового экземпляра класса.
     /// </summary>
-    public required string CountryName { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>
     /// Список регионов, принадлежащих стране.

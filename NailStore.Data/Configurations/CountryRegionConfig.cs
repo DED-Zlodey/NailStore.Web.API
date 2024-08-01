@@ -18,18 +18,17 @@ public class CountryRegionConfig : IEntityTypeConfiguration<Region>
     public void Configure(EntityTypeBuilder<Region> ent)
     {
         // Устанавливает имя таблицы в базе данных и первичный ключ
-        ent.ToTable("regions")
-            .HasKey(x => x.RegionId);
+        ent.ToTable("regions").HasKey(x => x.Id);
 
         // Настраивает сопоставление столбца для свойства CountryId
         ent.Property(x => x.CountryId).HasColumnName("country_id");
 
         // Настраивает сопоставление столбца для свойства RegionName.
         // Устанавливает ограничение, что это поле не может быть пустым
-        ent.Property(x => x.RegionName).HasColumnName("region_name").IsRequired();
+        ent.Property(x => x.Name).HasMaxLength(70).HasColumnName("region_name").IsRequired();
 
         // Настраивает сопоставление столбца для свойства RegionId
-        ent.Property(x => x.RegionId).HasColumnName("region_id");
+        ent.Property(x => x.Id).HasColumnName("region_id").UseIdentityColumn();
 
         // Настраивает связь между сущностями Region и City.
         // Указывает, что один регион может иметь несколько городов.
@@ -40,6 +39,6 @@ public class CountryRegionConfig : IEntityTypeConfiguration<Region>
         ent.HasIndex(x => x.CountryId);
 
         // Настраивает индекс на свойстве RegionId
-        ent.HasIndex(x => x.RegionId);
+        ent.HasIndex(x => x.Id);
     }
 }
