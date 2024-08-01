@@ -1,5 +1,5 @@
-﻿using NailStore.Core.Interfaces;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
+using NailStore.Application.Interfaces;
 
 namespace NailStore.Web.API.Extensions
 {

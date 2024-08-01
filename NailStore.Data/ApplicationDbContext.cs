@@ -34,7 +34,7 @@ public class ApplicationDbContext : IdentityDbContext<UserEntity, IdentityRole<G
     /// <summary>
     /// Получает или устанавливает набор DbSet для сущностей CountryRegion.
     /// </summary>
-    public DbSet<CountryRegion> Regions { get; set; }
+    public DbSet<Region> Regions { get; set; }
 
     /// <summary>
     /// Получает или устанавливает набор DbSet для сущностей City.

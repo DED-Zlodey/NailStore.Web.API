@@ -13,9 +13,9 @@ public class CategoryServiceModel
     /// <summary>
     /// Краткое описание категории
     /// </summary>
-    public string Description { get; set; }
+    public string? Description { get; set; }
     /// <summary>
     /// Навигационное свойство списка сервисов, которые принадлежат категории
     /// </summary>
-    public List<ServiceModel> Services { get; set; }
+    public List<ServiceModel>? Services { get; set; }
 }

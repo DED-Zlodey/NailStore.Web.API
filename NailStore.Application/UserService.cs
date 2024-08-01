@@ -6,6 +6,8 @@ using NailStore.Core.Models;
 using NailStore.Data.Models;
 using System.Runtime.InteropServices;
 using System.Text;
+using NailStore.Application.Interfaces;
+using NailStore.Application.Mapping;
 
 namespace NailStore.Application;
 
@@ -128,7 +130,8 @@ public class UserService : IUserService
             var result = await _signInManager.CheckPasswordSignInAsync(user, password, true);
             if (result.Succeeded)
             {
-                var token = await _jwtManager.GetBearerTokenAsync(user);
+                var userDTO = Mapper.MapTo(user);
+                var token = await _jwtManager.GetBearerTokenAsync(userDTO);
                 return new ResponseModelCore
                 {
                     Header = new()

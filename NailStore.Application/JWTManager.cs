@@ -4,22 +4,23 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NailStore.Application.Settings;
 using NailStore.Core.Interfaces;
-using NailStore.Data.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using NailStore.Application.Interfaces;
+using NailStore.Application.ModelsDTO;
 
 namespace NailStore.Application;
 
 public class JWTManager : IJWTManager
 {
     private readonly ILogger<JWTManager> _logger;
-    private readonly UserManager<UserEntity> _userManager;
+    private readonly IUserService _userService;
     private readonly SrvSettings _settings;
-    public JWTManager(ILogger<JWTManager> logger, IOptions<SrvSettings> srvSettings, UserManager<UserEntity> userManager)
+    public JWTManager(ILogger<JWTManager> logger, IOptions<SrvSettings> srvSettings, IUserService userService)
     {
         _logger = logger;
-        _userManager = userManager;
+        _userService = userService;
         _settings = srvSettings.Value;
     }
     public ClaimsPrincipal GetPrincipal(string token)
@@ -100,7 +101,7 @@ public class JWTManager : IJWTManager
     /// </summary>
     /// <param name="user"></param>
     /// <returns>Возвращает мастер-токен</returns>
-    public async Task<string> GetBearerTokenAsync(UserEntity user)
+    public async Task<string> GetBearerTokenAsync(UserDTO user)
     {
         var identity = await GetIdentityCaimsAsync(user);
         var now = DateTime.Now;
@@ -113,12 +114,12 @@ public class JWTManager : IJWTManager
                 signingCredentials: new SigningCredentials(GetSymmetricSecurityKey(_settings.ServerKey!), SecurityAlgorithms.HmacSha256));
         return new JwtSecurityTokenHandler().WriteToken(jwt);
     }
-    public async Task<ClaimsIdentity> GetIdentityCaimsAsync(UserEntity user)
+    public async Task<ClaimsIdentity> GetIdentityCaimsAsync(UserDTO user)
     {
-        var userRoles = await _userManager.GetRolesAsync(user);
+        var userRoles = await _userService.GetUserRolesAsync(user.userId.ToString());
         var claims = new List<Claim>
         { 
-            new Claim("Id", user.Id.ToString()), 
+            new Claim("Id", user.userId.ToString()), 
         };
         foreach (var role in userRoles)
         {
