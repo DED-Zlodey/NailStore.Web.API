@@ -16,6 +16,7 @@ using System.Text;
 using MailKit;
 using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.HttpOverrides;
+using NailStore.Application.Interfaces;
 using Npgsql;
 
 namespace NailStore.Web.API.ConfigureServices;

@@ -14,8 +14,4 @@
     <Folder Include="BL\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\NailStore.Data\NailStore.Data.csproj" />
-  </ItemGroup>
-
 </Project>
