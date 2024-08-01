@@ -17,10 +17,10 @@ public class CityConfig : IEntityTypeConfiguration<City>
     public void Configure(EntityTypeBuilder<City> ent)
     {
         // Устанавливает имя таблицы и первичный ключ для сущности City
-        ent.ToTable("cities").HasKey(x => x.CityId);
+        ent.ToTable("cities").HasKey(x => x.Id);
 
         // Настраивает сопоставление столбца для свойства CityId
-        ent.Property(x => x.CityId).HasColumnName("city_id");
+        ent.Property(x => x.Id).HasColumnName("city_id");
 
         // Настраивает сопоставление столбца для свойства RegionId
         ent.Property(x => x.RegionId).HasColumnName("region_id");
@@ -35,7 +35,7 @@ public class CityConfig : IEntityTypeConfiguration<City>
         ent.Property(x => x.Coordinates).HasColumnName("coordinates").HasColumnType("geometry (point)");
 
         // Добавляет индекс на свойство CityId
-        ent.HasIndex(x => x.CityId);
+        ent.HasIndex(x => x.Id);
 
         // Добавляет индекс на свойство RegionId
         ent.HasIndex(x => x.RegionId);

@@ -9,7 +9,7 @@ public class Region
     /// <summary>
     /// Уникальный идентификатор региона.
     /// </summary>
-    public int RegionId { get; set; }
+    public int Id { get; set; }
 
     /// <summary>
     /// Идентификатор страны, к которой принадлежит регион.
@@ -20,7 +20,7 @@ public class Region
     /// Название региона.
     /// Свойство обязательно для заполнения при создании нового экземпляра класса.
     /// </summary>
-    public required string RegionName { get; set; }
+    public string Name { get; set; }
 
     /// <summary>
     /// Список городов, принадлежащих региону.
@@ -31,5 +31,5 @@ public class Region
     /// Страна, к которой принадлежит регион.
     /// Это свойство может быть null, поскольку регион может не принадлежать ни одной стране.
     /// </summary>
-    public Country? Country { get; set; }
+    //public Country Country { get; set; }
 }

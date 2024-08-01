@@ -19,20 +19,20 @@ public class CountryConfig : IEntityTypeConfiguration<Country>
     {
         // Устанавливает имя таблицы в базе данных
         ent.ToTable(name: "countries")
-            .HasKey(x => x.CountryId);
+            .HasKey(x => x.Id);
 
         // Настраивает сопоставление столбца для свойства CountryId
-        ent.Property(x => x.CountryId).HasColumnName("country_id");
+        ent.Property(x => x.Id).HasColumnName("country_id");
 
         // Настраивает сопоставление столбца для свойства CountryName.
         // Устанавливает ограничение длины в 70 символов
-        ent.Property(x => x.CountryName).HasMaxLength(70).HasColumnName("country_name");
+        ent.Property(x => x.Name).HasMaxLength(70).HasColumnName("country_name");
 
         // Настраивает связь между сущностями Country и Region.
         // Указывает внешний ключ для связи
-        ent.HasMany(x => x.Regions).WithOne(x => x.Country).HasForeignKey(x => x.RegionId);
+        //ent.HasMany(x => x.Regions).WithOne(x => x.Country).HasForeignKey(x => x.Id);
 
         // Настраивает индекс на свойстве CountryId
-        ent.HasIndex(x => x.CountryId);
+        ent.HasIndex(x => x.Id);
     }
 }

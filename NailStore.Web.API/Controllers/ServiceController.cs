@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NailStore.Application.Interfaces;
 using NailStore.Core.Interfaces;
 using NailStore.Web.API.DTOs.Services;
 using NailStore.Web.API.Extensions;
