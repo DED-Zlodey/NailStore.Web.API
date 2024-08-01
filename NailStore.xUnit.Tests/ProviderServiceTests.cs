@@ -15,6 +15,7 @@ public class ProviderServiceTests
     private readonly Mock<ServiceRepository> _serviceRepository;
     private readonly ApplicationDbContext _context;
     private readonly UserEntity _testUser;
+
     public ProviderServiceTests()
     {
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
@@ -35,15 +36,23 @@ public class ProviderServiceTests
         InitDbData();
     }
 
+    /// <summary>
+    /// Initializes the database with test data for categories and users.
+    /// </summary>
     private void InitDbData()
     {
+        // Create a new category with test data
         var category1 = new CategoryServiceModel
         {
             CategoryId = 1,
             CategoryName = "Test Category",
             Description = "Test Description"
         };
+
+        // Check if the category already exists in the database
         var ent = _context.CategoriesServices.Find(category1.CategoryId);
+
+        // If the category does not exist, add it to the database
         if (ent == null)
         {
             _context.CategoriesServices.Add(new CategoryServiceModel
@@ -51,60 +60,75 @@ public class ProviderServiceTests
                 CategoryId = 1,
                 CategoryName = "Test Category",
                 Description = "Test Description"
-            });   
+            });
         }
-        var user =  _context.Users.Find(_testUser.Id);
+
+        // Check if the test user already exists in the database
+        var user = _context.Users.Find(_testUser.Id);
+
+        // If the user does not exist, add it to the database
         if (user == null)
         {
-            _context.Users.Add(_testUser);   
+            _context.Users.Add(_testUser);
         }
+
+        // Save changes to the database
         _context.SaveChanges();
     }
+
     [Fact]
     public async Task AddServiceAsync_ValidData_ReturnsSuccessResponse()
     {
         // Arrange
-       
+
         // Act
-        var result = await _providerService.AddServiceAsync(_testUser.Id, 1, "Test Service", new string[] { "Description 1", "Description 2" }, 100m, 30);
+        var result = await _providerService.AddServiceAsync(_testUser.Id, 1, "Test Service",
+            new string[] { "Description 1", "Description 2" }, 100m, 30);
 
         // Assert
         Assert.Equal(200, result.Header.StatusCode);
         Assert.Equal("Услуга успешно добавлена", result.Body.Message);
     }
+
     [Fact]
     public async Task AddServiceAsync_InvalidUserId_ReturnsNull()
     {
         // Arrange
 
         // Act
-        var result = await _providerService.AddServiceAsync(Guid.Empty, 1, "Test Service", new string[] { "Description 1", "Description 2" }, 100m, 30);
+        var result = await _providerService.AddServiceAsync(Guid.Empty, 1, "Test Service",
+            new string[] { "Description 1", "Description 2" }, 100m, 30);
 
         // Assert
         Assert.Null(result);
     }
+
     [Fact]
     public async Task AddServiceAsync_NegativePrice_ReturnsErrorResponse()
     {
         // Arrange
 
         // Act
-        var result = await _providerService.AddServiceAsync(_testUser.Id, 1, "Test Service", new string[] { "Description 1", "Description 2" }, -100m, 30);
+        var result = await _providerService.AddServiceAsync(_testUser.Id, 1, "Test Service",
+            new string[] { "Description 1", "Description 2" }, -100m, 30);
 
         // Assert
         Assert.Equal(400, result.Header.StatusCode);
     }
+
     [Fact]
     public async Task AddServiceAsync_NegativeDurationTime_ReturnsErrorResponse()
     {
         // Arrange
 
         // Act
-        var result = await _providerService.AddServiceAsync(_testUser.Id, 1, "Test Service", new string[] { "Description 1", "Description 2" }, 100m, -10);
+        var result = await _providerService.AddServiceAsync(_testUser.Id, 1, "Test Service",
+            new string[] { "Description 1", "Description 2" }, 100m, -10);
 
         // Assert
         Assert.Equal(400, result.Header.StatusCode);
     }
+
     [Fact]
     public async Task GetServicesByCategoryAsync_ReturnsResponseModelCore_WhenCalled()
     {
@@ -120,6 +144,7 @@ public class ProviderServiceTests
         Assert.Equal(200, result.Header.StatusCode);
         Assert.IsType<ResponseModelCore>(result);
     }
+
     [Fact]
     public async Task RemoveServiceAsync_UserDoesNotHavePermission_ReturnsDefaultResponse()
     {
@@ -134,6 +159,7 @@ public class ProviderServiceTests
         Assert.IsType<ResponseModelCore>(result);
         Assert.Equal(404, result.Header.StatusCode);
     }
+
     [Fact]
     public async Task RemoveServiceAsync_ReturnsDefaultResponse_WhenUserIdIsInvalid()
     {
@@ -145,13 +171,21 @@ public class ProviderServiceTests
         // Assert
         Assert.IsType<ResponseModelCore>(result);
         Assert.Equal(404, result.Header.StatusCode);
-        Assert.Equal("Не удалось удалить услугу. Услуга не найдена или не принадлежит пользователю", result.Header.Error);
+        Assert.Equal("Не удалось удалить услугу. Услуга не найдена или не принадлежит пользователю",
+            result.Header.Error);
     }
+
     [Fact]
     public async Task RemoveServiceAsync_ReturnsValidResponse_WhenServiceIdAndUserIdAreValid()
     {
         // Arrange
-        var expectedResponse = new ResponseModelCore { Header = new ResponseHeaderCore{ StatusCode = 404, Error = "Не удалось удалить услугу. Услуга не найдена или не принадлежит пользователю"}};
+        var expectedResponse = new ResponseModelCore
+        {
+            Header = new ResponseHeaderCore
+            {
+                StatusCode = 404, Error = "Не удалось удалить услугу. Услуга не найдена или не принадлежит пользователю"
+            }
+        };
 
         // Act
         var result = await _providerService.RemoveServiceAsync(1, Guid.NewGuid());
@@ -160,14 +194,17 @@ public class ProviderServiceTests
         Assert.Equal(expectedResponse.Header.StatusCode, result.Header.StatusCode);
         Assert.Equal(expectedResponse.Header.Error, result.Header.Error);
     }
+
     [Fact]
     public async Task RemoveServiceAsync_ValidData_ReturnsSuccessResponse()
     {
         // Arrange
-        await _providerService.AddServiceAsync(_testUser.Id, 1, "Test Service", new string[] { "Description 1", "Description 2" }, 100m, 20);
+        await _providerService.AddServiceAsync(_testUser.Id, 1, "Test Service",
+            new string[] { "Description 1", "Description 2" }, 100m, 20);
         var res = await _providerService.GetAllServicesByUserIdAsync(_testUser.Id, 0, 0);
         // Act
-        var result =await _providerService.RemoveServiceAsync(res.Body.GetServices.Services.Single().ServiceId, _testUser.Id);
+        var result =
+            await _providerService.RemoveServiceAsync(res.Body.GetServices.Services.Single().ServiceId, _testUser.Id);
 
         // Assert
         Assert.Equal(200, result.Header.StatusCode);
