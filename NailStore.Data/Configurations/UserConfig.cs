@@ -4,12 +4,23 @@ using NailStore.Data.Models;
 
 namespace NailStore.Data.Configurations;
 
+/// <summary>
+/// Класс конфигурации для сущности пользователя <see cref="UserEntity"/>
+/// Настраивает сопоставление столбцов, имя таблицы, первичный ключ и имена столбцов в базе данных.
+/// </summary>
 public class UserConfig : IEntityTypeConfiguration<UserEntity>
 {
+    /// <summary>
+    /// Настраивает конструктор сущности для типа <see cref="UserEntity"/>
+    /// </summary>
+    /// <param name="ent">Конструктор сущности для типа UserEntity.</param>
     public void Configure(EntityTypeBuilder<UserEntity> ent)
     {
+        // Устанавливает имя таблицы в базе данных и первичный ключ
         ent.ToTable(name: "users")
             .HasKey(x => x.Id);
+
+        // Настраивает свойства сущности
         ent.Property(x => x.UserName).HasMaxLength(50).HasColumnName("user_name").IsRequired();
         ent.Property(x => x.Email).HasColumnName("email").IsRequired();
         ent.Property(x => x.Enable).HasColumnName("enable");
@@ -30,7 +41,7 @@ public class UserConfig : IEntityTypeConfiguration<UserEntity>
         ent.Property(x => x.FirstName).HasMaxLength(50).HasColumnName("first_name");
         ent.Property(x => x.LastName).HasMaxLength(50).HasColumnName("last_name");
 
-        //Indexes
+        // Настраивает индексы для свойств сущности
         ent.HasIndex(x => x.Id);
         ent.HasIndex(x => x.Email).IsUnique();
         ent.HasIndex(x => x.UserName).IsUnique();
