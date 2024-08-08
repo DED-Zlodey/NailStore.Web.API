@@ -1,11 +1,13 @@
-﻿using NailStore.Core.Models.Country;
+﻿using NailStore.Core.Models;
+using NailStore.Core.Models.Country;
+using NailStore.Core.Models.GeoLocation;
 
 namespace NailStore.Core.Interfaces;
 
-public interface ICountryRepository
+public interface ICountryService
 {
     /// <summary>
-    /// Метод для асинхронной проверки существования страны в базе данных.
+    /// Метод для асинхронной проверки существования страны в системе.
     /// </summary>
     /// <returns>
     /// Возвращает <c>true</c>, если страна существует, и <c>false</c> в противном случае.
