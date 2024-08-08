@@ -39,10 +39,6 @@ public class ServiceModel
     /// </summary>
     public CategoryServiceModel? Category { get; set; }
     /// <summary>
-    /// Города, в которых предоставляется услуга
-    /// </summary>
-    public List<City>? Cities { get; set; }
-    /// <summary>
     /// Краткое описание услуги
     /// </summary>
     public string? DescriptionService { get; set; }

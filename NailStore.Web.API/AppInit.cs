@@ -18,7 +18,7 @@ public struct AppInit
     private readonly SrvSettings _srvSettings;
     private readonly RoleManager<IdentityRole<Guid>> _roleManager;
     private readonly UserManager<UserEntity> _userManager;
-    private readonly ICountryService _countryService;
+    private readonly IGeoService _geoService;
 
     /// <summary>
     /// Конструктор для инициализации структуры AppInit.
@@ -31,7 +31,7 @@ public struct AppInit
         _srvSettings = service.GetRequiredService<IOptions<SrvSettings>>().Value;
         _roleManager = service.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
         _userManager = service.GetRequiredService<UserManager<UserEntity>>();
-        _countryService = service.GetRequiredService<ICountryService>();
+        _geoService = service.GetRequiredService<IGeoService>();
     }
 
     /// <summary>
@@ -129,14 +129,14 @@ public struct AppInit
                 nameof(InitializeAsync), _srvSettings.Admin);
         }
 
-        if (!await _countryService.IsCountryExistAsync())
+        if (!await _geoService.IsCountryExistAsync())
         {
             var jsonCountry =
                 await GetStringJsonFromJSONFileAsync($"{AppDomain.CurrentDomain.BaseDirectory}Data\\Cities.json");
             if (!string.IsNullOrEmpty(jsonCountry))
             {
                 var country = GetObjectFromJSON<CountryDTO>(jsonCountry);
-                var res = await _countryService.InsertInitDataAsync(country);
+                var res = await _geoService.InsertInitDataAsync(country);
             }   
         }
         else
