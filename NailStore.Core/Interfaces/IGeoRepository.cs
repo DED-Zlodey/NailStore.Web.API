@@ -13,7 +13,13 @@ public interface IGeoRepository
     /// Возвращает <c>true</c>, если страна существует, и <c>false</c> в противном случае.
     /// </returns>
     Task<bool> IsCountryExistAsync();
-
+    /// <summary>
+    /// Метод для асинхронного добавления начальных данных (страны) в базу данных.
+    /// </summary>
+    /// <param name="country">Объект страны, который необходимо добавить в базу.</param>
+    /// <returns>
+    /// Возвращает <c>true</c>, если страна успешно добавлена в базу, и <c>false</c> в противном случае.
+    /// </returns>
     Task<bool> InsertInitDataAsync(CountryDTO country);
     /// <summary>
     /// Метод для асинхронного получения списка городов из указанного региона.
