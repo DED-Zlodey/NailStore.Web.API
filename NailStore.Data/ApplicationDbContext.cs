@@ -40,6 +40,9 @@ public class ApplicationDbContext : IdentityDbContext<UserEntity, IdentityRole<G
     /// Получает или устанавливает набор DbSet для сущностей City.
     /// </summary>
     public DbSet<City> Cities { get; set; }
+    /// <summary>
+    /// Получает или устанавливает набор DbSet для сущностей CityToService, который связывает City и Service.
+    /// </summary>
     public DbSet<CityToService> CityToService { get; set; }
 
     /// <summary>

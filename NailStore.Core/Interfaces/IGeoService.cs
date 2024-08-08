@@ -1,4 +1,6 @@
-﻿using NailStore.Core.Models.Country;
+﻿using NailStore.Core.Models;
+using NailStore.Core.Models.Country;
+using NailStore.Core.Models.GeoLocation;
 
 namespace NailStore.Core.Interfaces;
 
