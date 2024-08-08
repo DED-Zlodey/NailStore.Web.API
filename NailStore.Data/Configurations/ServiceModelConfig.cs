@@ -43,7 +43,6 @@ public class ServiceModelConfig : IEntityTypeConfiguration<ServiceModel>
         // Настраивает отношения между сущностями
         ent.HasMany(x => x.ServiceDescriptions).WithOne(x => x.Service).HasForeignKey(x => x.ServiceId);
         ent.HasOne(x => x.Category).WithMany(x => x.Services).HasForeignKey(x => x.CategoryId);
-        ent.HasMany(x => x.Cities).WithMany(x => x.Services).UsingEntity<CityToService>();
 
         // Настраивает индексы для свойств сущности
         ent.HasIndex(x => x.ServiceId);

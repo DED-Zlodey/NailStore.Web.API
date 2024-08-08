@@ -44,6 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="DTOs\Country\" />
     <Folder Include="Models\" />
   </ItemGroup>
 

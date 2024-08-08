@@ -125,6 +125,7 @@ public class ServiceRepository : IServiceRepository<Guid>
     /// <returns></returns>
     public async Task<ResponseModelCore> GetServicesByCategoryAsync(int categoryId, int pageNumber, int pageSize)
     {
+        var test = await _context.Cities.Where(x => x.RegionId == 2).ToListAsync();
         var response = new ResponseModelCore
         {
             Header = new()
@@ -137,9 +138,9 @@ public class ServiceRepository : IServiceRepository<Guid>
         pageSize = CheckAndSetPageSize(pageSize);
         var services = _context.Services.Where(x => x.CategoryId == categoryId).Select(x => new ResponseServiceModelCore
         {
-            CategoryName = x.Category.CategoryName,
+            CategoryName = x.Category!.CategoryName,
             CategoryId = x.CategoryId,
-            Descriptions = x.ServiceDescriptions.Select(c => new ResponseServiceDescroptionModelCore
+            Descriptions = x.ServiceDescriptions!.Select(c => new ResponseServiceDescroptionModelCore
             {
                 DescriptionId = c.DescriptionId,
                 Number = c.Number,
@@ -149,10 +150,10 @@ public class ServiceRepository : IServiceRepository<Guid>
             DurationTime = x.DurationTime,
             Master = new()
             {
-                NameMaster = x.User.UserName!
+                NameMaster = x.User!.UserName!
             },
             Price = x.Price,
-            ServiceName = x.ServiceName,
+            ServiceName = x.ServiceName!,
             ServiceId = x.ServiceId
         });
         var countServices = await services.CountAsync();
@@ -196,9 +197,9 @@ public class ServiceRepository : IServiceRepository<Guid>
         pageSize = CheckAndSetPageSize(pageSize);
         var services = _context.Services.Where(x => x.UserId == userId).Select(x => new ResponseServiceModelCore
         {
-            CategoryName = x.Category.CategoryName,
+            CategoryName = x.Category!.CategoryName,
             CategoryId = x.CategoryId,
-            Descriptions = x.ServiceDescriptions.Select(c => new ResponseServiceDescroptionModelCore
+            Descriptions = x.ServiceDescriptions!.Select(c => new ResponseServiceDescroptionModelCore
             {
                 DescriptionId = c.DescriptionId,
                 Number = c.Number,
@@ -208,10 +209,10 @@ public class ServiceRepository : IServiceRepository<Guid>
             DurationTime = x.DurationTime,
             Master = new()
             {
-                NameMaster = x.User.UserName!
+                NameMaster = x.User!.UserName!
             },
             Price = x.Price,
-            ServiceName = x.ServiceName,
+            ServiceName = x.ServiceName!,
             ServiceId = x.ServiceId
         });
         var countServices = await services.CountAsync();

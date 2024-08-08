@@ -4,7 +4,7 @@ using NailStore.Core.Models.GeoLocation;
 
 namespace NailStore.Core.Interfaces;
 
-public interface ICountryService
+public interface IGeoService
 {
     /// <summary>
     /// Метод для асинхронной проверки существования страны в системе.

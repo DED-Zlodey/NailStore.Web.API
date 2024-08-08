@@ -64,8 +64,8 @@ public struct ConfigureCustomServices
             .AddSingleton<IEmailService, EmailService>()
             .AddScoped<IProviderService<Guid>, ProviderService>()
             .AddScoped<IServiceRepository<Guid>, ServiceRepository>()
-            .AddScoped<ICountryService, CountryService>()
-            .AddScoped<ICountryRepository, CountryRepository>()
+            .AddScoped<IGeoService, GeoService>()
+            .AddScoped<IGeoRepository, GeoRepository>()
             .AddSingleton<SmtpClient>()
             ;
     }
@@ -78,10 +78,10 @@ public struct ConfigureCustomServices
     public void ConfigureDBServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("PostgreConnection"), o =>
-            {
-                o.UseNetTopologySuite();
-            }).LogTo(Console.WriteLine, LogLevel.Information));
+                options.UseNpgsql(configuration.GetConnectionString("PostgreConnection"),
+                        o => { o.UseNetTopologySuite(); })
+                    //.LogTo(Console.WriteLine, LogLevel.Information)
+                );
     }
 
     /// <summary>

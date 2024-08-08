@@ -32,12 +32,14 @@ public class CityConfig : IEntityTypeConfiguration<City>
         ent.Property(x => x.TimeZone).HasColumnName("time_zone").IsRequired();
 
         // Настраивает сопоставление столбца для свойства Coordinates, указывая тип данных как geometry (point)
-        ent.Property(x => x.Coordinates).HasColumnName("coordinates").HasColumnType("geometry (point)");
+        ent.Property(x => x.Coordinates).HasColumnName("coordinates").HasColumnType("geography (point)");
 
         // Добавляет индекс на свойство CityId
         ent.HasIndex(x => x.Id);
 
         // Добавляет индекс на свойство RegionId
         ent.HasIndex(x => x.RegionId);
+        // Добавляет индекс на свойство Coordinates
+        ent.HasIndex(x => x.Coordinates).HasMethod("GIST");
     }
 }

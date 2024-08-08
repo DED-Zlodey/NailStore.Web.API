@@ -44,6 +44,10 @@ public class ApplicationDbContext : IdentityDbContext<UserEntity, IdentityRole<G
     /// Получает или устанавливает набор DbSet для сущностей CityToService, который связывает City и Service.
     /// </summary>
     public DbSet<CityToService> CityToService { get; set; }
+    /// <summary>
+    /// Получает или устанавливает набор DbSet для сущностей GoogleLocations
+    /// </summary>
+    public DbSet<GoogleLocation> GoogleLocations { get; set; }
 
     /// <summary>
     /// Инициализирует новый экземпляр класса ApplicationDbContext.
@@ -52,7 +56,7 @@ public class ApplicationDbContext : IdentityDbContext<UserEntity, IdentityRole<G
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-        
+        //Database.EnsureCreated();
     }
 
     /// <summary>
