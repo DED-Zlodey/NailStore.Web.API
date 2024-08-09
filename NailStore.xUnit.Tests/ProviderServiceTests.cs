@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using NailStore.Application;
 using NailStore.Core.Models;
+using NailStore.Core.Models.ResponseModels.Services;
 using NailStore.Data;
 using NailStore.Data.Models;
 using NailStore.Repositories;
@@ -87,7 +88,7 @@ public class ProviderServiceTests
 
         // Assert
         Assert.Equal(200, result.Header.StatusCode);
-        Assert.Equal("Услуга успешно добавлена", result.Body.Message);
+        Assert.Equal("Услуга успешно добавлена", result.Result);
     }
 
     [Fact]
@@ -142,7 +143,7 @@ public class ProviderServiceTests
 
         // Assert
         Assert.Equal(200, result.Header.StatusCode);
-        Assert.IsType<ResponseModelCore>(result);
+        Assert.IsType<ResponseModelCore<ResponseGetServiceModelCore>>(result);
     }
 
     [Fact]
@@ -156,7 +157,7 @@ public class ProviderServiceTests
         var result = await _providerService.RemoveServiceAsync(serviceId, userId);
 
         // Assert
-        Assert.IsType<ResponseModelCore>(result);
+        Assert.IsType<ResponseModelCore<string>>(result);
         Assert.Equal(404, result.Header.StatusCode);
     }
 
@@ -169,7 +170,7 @@ public class ProviderServiceTests
         var result = await _providerService.RemoveServiceAsync(1, Guid.Empty);
 
         // Assert
-        Assert.IsType<ResponseModelCore>(result);
+        Assert.IsType<ResponseModelCore<string>>(result);
         Assert.Equal(404, result.Header.StatusCode);
         Assert.Equal("Не удалось удалить услугу. Услуга не найдена или не принадлежит пользователю",
             result.Header.Error);
@@ -179,7 +180,7 @@ public class ProviderServiceTests
     public async Task RemoveServiceAsync_ReturnsValidResponse_WhenServiceIdAndUserIdAreValid()
     {
         // Arrange
-        var expectedResponse = new ResponseModelCore
+        var expectedResponse = new ResponseModelCore<string>
         {
             Header = new ResponseHeaderCore
             {
@@ -204,10 +205,10 @@ public class ProviderServiceTests
         var res = await _providerService.GetAllServicesByUserIdAsync(_testUser.Id, 0, 0);
         // Act
         var result =
-            await _providerService.RemoveServiceAsync(res.Body.GetServices.Services.Single().ServiceId, _testUser.Id);
+            await _providerService.RemoveServiceAsync(res.Result.Services.Single().ServiceId, _testUser.Id);
 
         // Assert
         Assert.Equal(200, result.Header.StatusCode);
-        Assert.Equal("Услуга успешно удалена", result.Body.Message);
+        Assert.Equal("Услуга успешно удалена", result.Result);
     }
 }

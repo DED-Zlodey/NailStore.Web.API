@@ -1,5 +1,6 @@
 ﻿using NailStore.Core.Interfaces;
 using NailStore.Core.Models;
+using NailStore.Core.Models.ResponseModels.Services;
 using NailStore.Repositories;
 
 namespace NailStore.Application;
@@ -23,29 +24,31 @@ public class ProviderService : IProviderService<Guid>
     /// <param name="price">Стоимость услуги</param>
     /// <param name="durationTime">Длительность процедуры</param>
     /// <returns>Вернет объект ответа</returns>
-    public async Task<ResponseModelCore> AddServiceAsync(Guid userId, int categoryId, string serviceName, string[] descs, decimal price, short durationTime)
+    public async Task<ResponseModelCore<string>> AddServiceAsync(Guid userId, int categoryId, string serviceName, string[] descs, decimal price, short durationTime)
     {
         if (price < 0)
         {
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new()
                 {
                     Error = "Стоимость услуги не может быть отрицательной",
                     StatusCode = 400
-                }
+                },
+                Result = "Стоимость услуги не может быть отрицательной",
             };
         }
 
         if (durationTime < 0)
         {
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new()
                 {
                     Error = "Длительность процедуры не может быть отрицательной",
                     StatusCode = 400
-                }
+                },
+                Result = "Длительность процедуры не может быть отрицательной",
             };
         }
         return await _serviceRepository.AddServiceAsync(userId, categoryId, serviceName, descs, price, durationTime);
@@ -57,7 +60,7 @@ public class ProviderService : IProviderService<Guid>
     /// <param name="pageNumber">Номер запрашиваемой страницы</param>
     /// <param name="pageSize">Количество записей на страницу</param>
     /// <returns></returns>
-    public async Task<ResponseModelCore> GetServicesByCategoryAsync(int categoryId, int pageNumber, int pageSize)
+    public async Task<ResponseModelCore<ResponseGetServiceModelCore>> GetServicesByCategoryAsync(int categoryId, int pageNumber, int pageSize)
     {
         return await _serviceRepository.GetServicesByCategoryAsync(categoryId, pageNumber, pageSize);
     }
@@ -73,7 +76,7 @@ public class ProviderService : IProviderService<Guid>
     /// - <see cref="ResponseModelCore.Header"/>: Содержит код состояния HTTP и сообщение об ошибке, если таковое имеется.
     /// - <see cref="ResponseModelCore.Body"/>: Содержит полученные услуги и информацию о пагинации.
     /// </returns>
-    public async Task<ResponseModelCore> GetAllServicesByUserIdAsync(Guid userId, int pageNumber, int pageSize)
+    public async Task<ResponseModelCore<ResponseGetServiceModelCore>> GetAllServicesByUserIdAsync(Guid userId, int pageNumber, int pageSize)
     {
         return await _serviceRepository.GetAllServicesByUserIdAsync(userId, pageNumber, pageSize);
     }
@@ -84,7 +87,7 @@ public class ProviderService : IProviderService<Guid>
     /// <param name="serviceId">Идентификатор услуги</param>
     /// <param name="userId">Идентификатор пользователя</param>
     /// <returns></returns>
-    public async Task<ResponseModelCore> RemoveServiceAsync(int serviceId, Guid userId)
+    public async Task<ResponseModelCore<string>> RemoveServiceAsync(int serviceId, Guid userId)
     {
         return await _serviceRepository.RemoveServiceAsync(serviceId, userId);
     }

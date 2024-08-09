@@ -35,18 +35,19 @@ public class UserService : IUserService
     /// </summary>
     /// <param name="userConfirmited">модель подтверждения Email</param>
     /// <returns>Возвращает объект ответа</returns>
-    public async Task<ResponseModelCore> ConfirmedEmailUser(UserConfirmitedEmail userConfirmited)
+    public async Task<ResponseModelCore<string>> ConfirmedEmailUser(UserConfirmitedEmail userConfirmited)
     {
         var user = await _userManager.FindByIdAsync(userConfirmited.UserId);
         if (user == null)
         {
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new()
                 {
                     Error = $"Не удалось получить идентификатор пользователя '{userConfirmited.UserId}'.",
                     StatusCode = 500
-                }
+                },
+                Result = $"Не удалось получить идентификатор пользователя '{userConfirmited.UserId}'.",
             };
         }
 
@@ -54,17 +55,14 @@ public class UserService : IUserService
         var result = await _userManager.ConfirmEmailAsync(user!, code);
         if (result.Succeeded)
         {
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new()
                 {
                     Error = string.Empty,
                     StatusCode = 200
                 },
-                Body = new()
-                {
-                    Message = "Спасибо, что подтвердили свой адрес электронной почты."
-                }
+                Result = "Спасибо, что подтвердили свой адрес электронной почты."
             };
         }
         else
@@ -72,17 +70,14 @@ public class UserService : IUserService
             var errorStr = GetIdentityErrorString(result.Errors.ToList());
             _logger.LogError("{method} Не удалось сменить пароль для акканта {accont}. Reason: {reason}",
                 nameof(ConfirmedEmailUser), user.Email, errorStr);
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new()
                 {
                     Error = $"Не удалось подтвердить почтовый ящик {user.Email} Reason: {errorStr}",
                     StatusCode = 500
                 },
-                Body = new()
-                {
-                    Message = $"Не удалось подтвердить почтовый ящик {user.Email} Reason: {errorStr}"
-                }
+                Result = $"Не удалось подтвердить почтовый ящик {user.Email} Reason: {errorStr}",
             };
         }
     }
@@ -92,7 +87,7 @@ public class UserService : IUserService
     /// </summary>
     /// <param name="id">Идентификатор пользователя</param>
     /// <returns>Возвращает объект ответа</returns>
-    public async Task<ResponseModelCore> GetUserByIdAsync(Guid id)
+    public async Task<ResponseModelCore<UserIdentityCoreModel>> GetUserByIdAsync(Guid id)
     {
         var user = await _userManager.FindByIdAsync(id.ToString());
         if (user != null)
@@ -101,7 +96,7 @@ public class UserService : IUserService
                 user.Enable);
         }
         _logger.LogError("{method} Пользователь с идентификатором {id} не найден", nameof(GetUserByIdAsync), id);
-        return new ResponseModelCore
+        return new ResponseModelCore<UserIdentityCoreModel>
         {
             Header = new()
             {
@@ -120,7 +115,7 @@ public class UserService : IUserService
     /// Возвращает объект ответа, содержащий токен доступа в случае успешного входа.
     /// Если вход не удачен, возвращает соответствующее сообщение об ошибке.
     /// </returns>
-    public async Task<ResponseModelCore> LoginUserAsync(string email, string password)
+    public async Task<ResponseModelCore<string>> LoginUserAsync(string email, string password)
     {
         var user = await _userManager.FindByEmailAsync(email);
         if (user != null)
@@ -129,17 +124,14 @@ public class UserService : IUserService
             if (result.Succeeded)
             {
                 var token = await _jwtManager.GetBearerTokenAsync(user.Id.ToString());
-                return new ResponseModelCore
+                return new ResponseModelCore<string>
                 {
                     Header = new()
                     {
                         Error = string.Empty,
                         StatusCode = 200,
                     },
-                    Body = new()
-                    {
-                        Token = token
-                    }
+                    Result = token
                 };
             }
             else
@@ -149,7 +141,7 @@ public class UserService : IUserService
                     var lockoutEndDate = _userManager.GetLockoutEndDateAsync(user);
                     if (lockoutEndDate.IsCompletedSuccessfully)
                     {
-                        var responseModel = new ResponseModelCore
+                        var responseModel = new ResponseModelCore<string>
                         {
                             Header = new()
                             {
@@ -157,54 +149,42 @@ public class UserService : IUserService
                                     $"Из-за превышения неудачных попыток входа, пользователь заблокирован до {lockoutEndDate.Result!.Value.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss")} UTC+8",
                                 StatusCode = 403,
                             },
-                            Body = new()
-                            {
-                                Message = "Из-за превышения неудачных попыток входа, пользователь заблокирован."
-                            }
+                            Result = $"Из-за превышения неудачных попыток входа, пользователь заблокирован до {lockoutEndDate.Result!.Value.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss")} UTC+8",
                         };
                         return responseModel;
                     }
-                    return new ResponseModelCore
+                    return new ResponseModelCore<string>
                     {
                         Header = new()
                         {
                             Error = "Доступ запрещен",
                             StatusCode = 403,
                         },
-                        Body = new()
-                        {
-                            Message = "Доступ запрещен",
-                        }
+                        Result = "Доступ запрещен"
                     };
                 }
 
-                return new ResponseModelCore
+                return new ResponseModelCore<string>
                 {
                     Header = new()
                     {
                         Error = $"Email {email} или пароль пользователя не верный",
                         StatusCode = 403
                     },
-                    Body = new()
-                    {
-                        Message = $"Email {email} или пароль пользователя не верный"
-                    }
+                    Result = $"Email {email} или пароль пользователя не верный"
                 };
             }
         }
         else
         {
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new()
                 {
                     Error = $"Email {email} или пароль пользователя не верный",
                     StatusCode = 403
                 },
-                Body = new()
-                {
-                    Message = $"Email {email} или пароль пользователя не верный"
-                }
+                Result = $"Email {email} или пароль пользователя не верный"
             };
         }
     }
@@ -217,7 +197,7 @@ public class UserService : IUserService
     /// <param name="email">Email пользователя</param>
     /// <param name="password">Пароль пользователя</param>
     /// <returns>Возвращает объект ответа</returns>
-    public async Task<ResponseModelCore> RegisterUserAsync(string url, string userName, string email, string password)
+    public async Task<ResponseModelCore<string>> RegisterUserAsync(string url, string userName, string email, string password)
     {
         if (!IsStopNickName(userName))
         {
@@ -229,10 +209,11 @@ public class UserService : IUserService
                     var reason = $"{email} - уже существует!";
                     _logger.LogError("{nameMethod}: Пользователь {Email} не зарегистрирован. Reson: {errorString}",
                         nameof(RegisterUserAsync), email, reason);
-                    return new ResponseModelCore
+                    return new ResponseModelCore<string>
                     {
                         Header = new()
                             { Error = $"Пользователь {email} не зарегистрирован. Reson: {reason}", StatusCode = 400 },
+                        Result =  $"Пользователь {email} не зарегистрирован. Reson: {reason}",
                     };
                 }
 
@@ -266,18 +247,14 @@ public class UserService : IUserService
                                 nameof(RegisterUserAsync), regUser.Email);
                         }
 
-                        return new ResponseModelCore
+                        return new ResponseModelCore<string>
                         {
                             Header = new()
                             {
                                 Error = string.Empty,
                                 StatusCode = 200
                             },
-                            Body = new()
-                            {
-                                Message =
-                                    "Регистрация прошла успешно! На электронную почту выслано письмо, для завершения регистрации выполните инструкции в отправленном письме. Спасибо!"
-                            }
+                            Result = "Регистрация прошла успешно! На электронную почту выслано письмо, для завершения регистрации выполните инструкции в отправленном письме. Спасибо!",
                         };
                     }
                     else
@@ -286,14 +263,15 @@ public class UserService : IUserService
                         _logger.LogError(
                             "{nameMethod}: Пользователь {Email} не зарегистрирован. Не удалось отправить письмо",
                             nameof(RegisterUserAsync), regUser.Email);
-                        return new ResponseModelCore
+                        return new ResponseModelCore<string>
                         {
                             Header = new()
                             {
                                 Error =
                                     $"Пользователь {regUser.Email} не зарегистрирован. Не удалось отправить письмо. Error: {resultSendEmail.StatusCode}",
                                 StatusCode = 500
-                            }
+                            },
+                            Result = $"Пользователь {regUser.Email} не зарегистрирован. Не удалось отправить письмо. Error: {resultSendEmail.StatusCode}",
                         };
                     }
                 }
@@ -302,13 +280,14 @@ public class UserService : IUserService
                     var errorString = GetIdentityErrorString(result.Errors.ToList());
                     _logger.LogError("{nameMethod}: Пользователь {Email} не зарегистрирован. Reson: {errorString}",
                         nameof(RegisterUserAsync), regUser.Email, errorString);
-                    return new ResponseModelCore
+                    return new ResponseModelCore<string>
                     {
                         Header = new()
                         {
                             Error = $"Пользователь {regUser.Email} не зарегистрирован. Reson: {errorString}",
                             StatusCode = 500
                         },
+                        Result = $"Пользователь {regUser.Email} не зарегистрирован. Reson: {errorString}",
                     };
                 }
             }
@@ -317,10 +296,11 @@ public class UserService : IUserService
                 var reason = $"{userName} - никнейм уже занят!";
                 _logger.LogError("{nameMethod}: Пользователь {Email} не зарегистрирован. Reson: {errorString}",
                     nameof(RegisterUserAsync), email, reason);
-                return new ResponseModelCore
+                return new ResponseModelCore<string>
                 {
                     Header = new()
                         { Error = $"Пользователь {email} не зарегистрирован. Reson: {reason}", StatusCode = 400 },
+                    Result = $"Пользователь {email} не зарегистрирован. Reson: {reason}",
                 };
             }
         }
@@ -329,10 +309,11 @@ public class UserService : IUserService
             var reason = $"{userName} - никнейм уже занят!";
             _logger.LogError("{nameMethod}: Пользователь {Email} не зарегистрирован. Reson: {errorString}",
                 nameof(RegisterUserAsync), email, reason);
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new()
                     { Error = $"Пользователь {email} не зарегистрирован. Reson: {reason}", StatusCode = 400 },
+                Result = $"Пользователь {email} не зарегистрирован. Reson: {reason}",
             };
         }
     }
@@ -368,28 +349,30 @@ public class UserService : IUserService
     /// <param name="email">Почта пользователя</param>
     /// <param name="url">URL для формирования колбэк ссылки</param>
     /// <returns>Возвращает объект ответа</returns>
-    public async Task<ResponseModelCore> RecoveryPasswordSend(string email, string url)
+    public async Task<ResponseModelCore<string>> RecoveryPasswordSend(string email, string url)
     {
         if (string.IsNullOrEmpty(email))
         {
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new()
                 {
                     Error = "Восстановление пароля невозможно. Reason: Email не может быть пустым или равным null",
                     StatusCode = 400
-                }
+                },
+                Result = "Восстановление пароля невозможно. Reason: Email не может быть пустым или равным null",
             };
         }
         if (string.IsNullOrEmpty(url))
         {
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new()
                 {
                     Error = "Восстановление пароля невозможно. Reason: URL не может быть пустым или равным null",
                     StatusCode = 400
-                }
+                },
+                Result = "Восстановление пароля невозможно. Reason: URL не может быть пустым или равным null",
             };
         }
         var user = await _userManager.FindByNameAsync(email);
@@ -398,13 +381,10 @@ public class UserService : IUserService
             _logger.LogError(
                 "{nameMethod}: Пользователь, с почтовым ящиком: {Email}, не зарегистрирован в системе. Восстановить пароль для данного пользователя невозможно",
                 nameof(RecoveryPasswordSend), email);
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new() { Error = string.Empty, StatusCode = 200 },
-                Body = new()
-                {
-                    Message = "На указанную Вами почту отправлены инструкции для восстановления пароля"
-                }
+                Result = $"На указанную Вами почту отправлены инструкции для восстановления пароля"
             };
         }
 
@@ -415,25 +395,18 @@ public class UserService : IUserService
             "Подтвердите вашу учетную запись, кликнув <a href=\"" + urlCallback + "\">здесь</a>");
         if (resultSendEmail.IsSending)
         {
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new() { Error = string.Empty, StatusCode = 200 },
-                Body = new()
-                {
-                    Message = "На указанную Вами почту отправлены инструкции для восстановления пароля"
-                }
+                Result = $"На указанную Вами почту отправлены инструкции для восстановления пароля"
             };
         }
         else
         {
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new() { Error = string.Empty, StatusCode = resultSendEmail.StatusCode },
-                Body = new()
-                {
-                    Message =
-                        $"Не удалось отправить инструкции по восстановлению пароля на указанную Вами почту. Возможно, были допущены опечатки при вводе адреса эл. почты? Error: {resultSendEmail.StatusCode}"
-                }
+                Result = $"Не удалось отправить инструкции по восстановлению пароля на указанную Вами почту. Возможно, были допущены опечатки при вводе адреса эл. почты? Error: {resultSendEmail.StatusCode}"
             };
         }
     }
@@ -445,41 +418,44 @@ public class UserService : IUserService
     /// <param name="inputСode">Токен подтверждения смены пароля</param>
     /// <param name="newPass">Новый пароль</param>
     /// <returns>Возвращает объект ответа</returns>
-    public async Task<ResponseModelCore> RecoveryPassword(string userId, string inputСode, string newPass)
+    public async Task<ResponseModelCore<string>> RecoveryPassword(string userId, string inputСode, string newPass)
     {
         if (string.IsNullOrEmpty(userId))
         {
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new()
                 {
                     Error = "Смена пароля невозможна. Reason: userId не может быть пустым или равным null",
                     StatusCode = 400
-                }
+                },
+                Result = "Смена пароля невозможна. Reason: userId не может быть пустым или равным null",
             };
         }
 
         if (string.IsNullOrEmpty(inputСode))
         {
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new()
                 {
                     Error = "Смена пароля невозможна. Reason: Token не может быть пустым или равным null",
                     StatusCode = 400
-                }
+                },
+                Result = "Смена пароля невозможна. Reason: Token не может быть пустым или равным null",
             };
         }
 
         if (string.IsNullOrEmpty(newPass))
         {
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new()
                 {
                     Error = "Смена пароля невозможна. Reason: Новый пароль не может быть пустым или равным null",
                     StatusCode = 400
-                }
+                },
+                Result = "Смена пароля невозможна. Reason: Новый пароль не может быть пустым или равным null",
             };
         }
         
@@ -490,13 +466,14 @@ public class UserService : IUserService
             {
                 _logger.LogError("{method} Не удалось получить пользователя по его идентификатору: {id}",
                     nameof(RecoveryPassword), userId);
-                return new ResponseModelCore
+                return new ResponseModelCore<string>
                 {
                     Header = new()
                     {
                         Error = $"Не удалось получить пользователя по его идентификатору: '{userId}'.",
                         StatusCode = 404
-                    }
+                    },
+                    Result = $"Не удалось получить пользователя по его идентификатору: '{userId}'.",
                 };
             }
 
@@ -504,17 +481,14 @@ public class UserService : IUserService
             var result = await _userManager.ResetPasswordAsync(user!, inputСode, newPass);
             if (result.Succeeded)
             {
-                return new ResponseModelCore
+                return new ResponseModelCore<string>
                 {
                     Header = new()
                     {
                         Error = string.Empty,
                         StatusCode = 200
                     },
-                    Body = new()
-                    {
-                        Message = $"Пароль успешно изменен"
-                    }
+                    Result = "Пароль успешно изменен"
                 };
             }
             else
@@ -522,17 +496,14 @@ public class UserService : IUserService
                 var errorStr = GetIdentityErrorString(result.Errors.ToList());
                 _logger.LogError("{method} Не удалось сменить пароль для аккаунта {accont}. Reason: {reason}",
                     nameof(RecoveryPassword), user.Email, errorStr);
-                return new ResponseModelCore
+                return new ResponseModelCore<string>
                 {
                     Header = new()
                     {
                         Error = $"Не удалось сменить пароль. Reason: {errorStr}",
                         StatusCode = 500
                     },
-                    Body = new()
-                    {
-                        Message = $"Не удалось сменить пароль. Reason: {errorStr}"
-                    }
+                    Result = $"Не удалось сменить пароль. Reason: {errorStr}"
                 };
             }
         }
@@ -540,17 +511,14 @@ public class UserService : IUserService
         {
             _logger.LogError(ex, "{method} Не удалось сменить пароль для аккаунта c Id: {accont}. Reason: {reason}",
                 nameof(RecoveryPassword), userId, ex.Message);
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new()
                 {
                     Error = $"Не удалось сменить пароль.",
                     StatusCode = 500
                 },
-                Body = new()
-                {
-                    Message = $"Не удалось сменить пароль."
-                }
+                Result = $"Не удалось сменить пароль."
             };
         }
     }

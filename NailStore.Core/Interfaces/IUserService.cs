@@ -12,26 +12,26 @@ public interface IUserService
     /// <param name="email">Email пользовтаеля</param>
     /// <param name="password">Пароль пользователя</param>
     /// <returns>Возвращает объект ответа</returns>
-    Task<ResponseModelCore> RegisterUserAsync(string url, string userName, string email, string password);
+    Task<ResponseModelCore<string>> RegisterUserAsync(string url, string userName, string email, string password);
     /// <summary>
     /// Аутентификация пользователя по Email и паролю
     /// </summary>
     /// <param name="email">Email пользователя</param>
     /// <param name="password">Пароль пользователя</param>
     /// <returns>Возвращает объект ответа</returns>
-    Task<ResponseModelCore> LoginUserAsync(string email, string password);
+    Task<ResponseModelCore<string>> LoginUserAsync(string email, string password);
     /// <summary>
     /// Получить пользователя по его идентификатору
     /// </summary>
     /// <param name="id">Идентификатор пользователя</param>
     /// <returns>Возвращает объект ответа</returns>
-    Task<ResponseModelCore> GetUserByIdAsync(Guid id);
+    Task<ResponseModelCore<UserIdentityCoreModel>> GetUserByIdAsync(Guid id);
     /// <summary>
     ///  Подтверждение Email пользователя
     /// </summary>
     /// <param name="userConfirmited">модель подтверждения Email</param>
     /// <returns>Возвращает объект ответа</returns>
-    Task<ResponseModelCore> ConfirmedEmailUser(UserConfirmitedEmail userConfirmited);
+    Task<ResponseModelCore<string>> ConfirmedEmailUser(UserConfirmitedEmail userConfirmited);
     /// <summary>
     /// Проверяет свободно ли имя пользователя
     /// </summary>
@@ -44,7 +44,7 @@ public interface IUserService
     /// <param name="email">Почта пользователя</param>
     /// <param name="url">URL для формирования колбэк ссылки</param>
     /// <returns></returns>
-    Task<ResponseModelCore> RecoveryPasswordSend(string email, string url);
+    Task<ResponseModelCore<string>> RecoveryPasswordSend(string email, string url);
     /// <summary>
     /// Сменить пароль на новый
     /// </summary>
@@ -52,7 +52,7 @@ public interface IUserService
     /// <param name="inputСode">Токен подтверждения смены пароля</param>
     /// <param name="newPass">Новый пароль</param>
     /// <returns>Возвращает объект ответа</returns>
-    Task<ResponseModelCore> RecoveryPassword(string userId, string inputСode, string newPass);
+    Task<ResponseModelCore<string>> RecoveryPassword(string userId, string inputСode, string newPass);
     /// <summary>
     /// Получить роли пользователя
     /// </summary>

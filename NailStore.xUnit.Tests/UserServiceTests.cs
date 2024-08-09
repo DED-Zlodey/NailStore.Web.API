@@ -112,7 +112,7 @@ public class UserServiceTests
         // Assert
         Assert.Equal(200, result.Header.StatusCode);
         Assert.Equal(string.Empty, result.Header.Error);
-        Assert.Equal("Спасибо, что подтвердили свой адрес электронной почты.", result.Body.Message);
+        Assert.Equal("Спасибо, что подтвердили свой адрес электронной почты.", result.Result);
     }
 
     [Fact]
@@ -174,7 +174,7 @@ public class UserServiceTests
 
         // Assert
         Assert.Equal(200, result.Header.StatusCode);
-        Assert.NotNull(result.Body.Token);
+        Assert.NotNull(result.Result);
     }
 
     [Fact]
@@ -199,7 +199,7 @@ public class UserServiceTests
         Assert.Equal(200, result.Header.StatusCode);
         Assert.Equal(
             "Регистрация прошла успешно! На электронную почту выслано письмо, для завершения регистрации выполните инструкции в отправленном письме. Спасибо!",
-            result.Body.Message);
+            result.Result);
     }
 
     [Fact]
@@ -327,7 +327,7 @@ public class UserServiceTests
 
         // Assert
         Assert.Equal(200, result.Header.StatusCode);
-        Assert.Equal("На указанную Вами почту отправлены инструкции для восстановления пароля", result.Body.Message);
+        Assert.Equal("На указанную Вами почту отправлены инструкции для восстановления пароля", result.Result);
     }
 
     [Fact]
@@ -343,7 +343,7 @@ public class UserServiceTests
 
         // Assert
         Assert.Equal(200, result.Header.StatusCode);
-        Assert.Equal("На указанную Вами почту отправлены инструкции для восстановления пароля", result.Body.Message);
+        Assert.Equal("На указанную Вами почту отправлены инструкции для восстановления пароля", result.Result);
     }
 
     [Theory]
@@ -395,7 +395,7 @@ public class UserServiceTests
 
         // Assert
         Assert.Equal(200, result.Header.StatusCode);
-        Assert.Equal("Пароль успешно изменен", result.Body.Message);
+        Assert.Equal("Пароль успешно изменен", result.Result);
     }
 
     [Fact]
@@ -431,7 +431,7 @@ public class UserServiceTests
         // Assert
         Assert.Equal(500, result.Header.StatusCode);
         Assert.Equal("Не удалось сменить пароль. Reason: Reset password failed", result.Header.Error);
-        Assert.Equal("Не удалось сменить пароль. Reason: Reset password failed", result.Body.Message);
+        Assert.Equal("Не удалось сменить пароль. Reason: Reset password failed", result.Result);
     }
 
     [Fact]
@@ -449,7 +449,7 @@ public class UserServiceTests
         // Assert
         Assert.Equal(500, result.Header.StatusCode);
         Assert.Equal("Не удалось сменить пароль.", result.Header.Error);
-        Assert.Equal("Не удалось сменить пароль.", result.Body.Message);
+        Assert.Equal("Не удалось сменить пароль.", result.Result);
     }
 
     [Fact]

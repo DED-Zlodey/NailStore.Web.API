@@ -36,5 +36,5 @@ public interface IGeoRepository
     /// <returns>
     /// Возвращает строку с сообщением "Локации успешно добавлены", если все геолокации успешно добавлены в базу.
     /// </returns>
-    Task<ResponseModelCore> AddGeolocationsAsync(List<GeolocationDTO> geolocations);
+    Task<ResponseModelCore<string>> AddGeolocationsAsync(List<GeolocationDTO> geolocations);
 }

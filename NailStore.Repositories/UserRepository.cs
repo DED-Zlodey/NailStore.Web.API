@@ -22,13 +22,13 @@ public class UserRepository : IUserRepository
     /// </summary>
     /// <param name="email">Email пользователя</param>
     /// <returns>Возвращает модель ответа</returns>
-    public async Task<ResponseModelCore> GetLockOutTimeUser(string email)
+    public async Task<ResponseModelCore<DateTimeOffset?>> GetLockOutTimeUser(string email)
     {
         var user = await _context.Users.Select(x => new { x.Email, x.LockoutEnd }).AsNoTracking().FirstOrDefaultAsync(x => x.Email == email);
         if (user == null)
         {
             _logger.LogError("{method} Пользователь {email} не найден", nameof(GetLockOutTimeUser), email);
-            return new ResponseModelCore
+            return new ResponseModelCore<DateTimeOffset?>
             {
                 Header = new ResponseHeaderCore
                 {
@@ -37,26 +37,23 @@ public class UserRepository : IUserRepository
                 }
             };
         }
-        return new ResponseModelCore
+        return new ResponseModelCore<DateTimeOffset?>
         {
             Header = new ResponseHeaderCore
             {
                 Error = string.Empty,
                 StatusCode = 200,
             },
-            Body = new ResponseBodyCore
-            {
-                LockedOutTime = user.LockoutEnd
-            }
+            Result = user.LockoutEnd
         };
     }
-    public async Task<ResponseModelCore> GetUserByIdAsync(Guid id)
+    public async Task<ResponseModelCore<UserIdentityCoreModel>> GetUserByIdAsync(Guid id)
     {
         var user = await _context.Users.Select(x => new { x.Id, x.UserName, x.PhoneNumber, x.Enable, x.RegisterAt }).AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         if (user == null)
         {
             _logger.LogError("{method} Пользователь с идентификатором {id} не найден", nameof(GetUserByIdAsync), id);
-            return new ResponseModelCore { Header = new ResponseHeaderCore { Error = $"Пользователь с идентификатором {id} не найден.", StatusCode = 404 } };
+            return new ResponseModelCore<UserIdentityCoreModel> { Header = new ResponseHeaderCore { Error = $"Пользователь с идентификатором {id} не найден.", StatusCode = 404 } };
         }
         return UserIdentityCoreModel.CreateUser(user!.Id, user.UserName!, user.RegisterAt, user.PhoneNumber, user.Enable);
     }
@@ -65,13 +62,13 @@ public class UserRepository : IUserRepository
     /// </summary>
     /// <param name="email">Email пользователя</param>
     /// <returns>Вернет пользователя или <b>null</b></returns>
-    public async Task<ResponseModelCore> GetUserByEmailAsync(string email)
+    public async Task<ResponseModelCore<UserIdentityCoreModel>> GetUserByEmailAsync(string email)
     {
         var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
         if (user == null)
         {
             _logger.LogError("{method} Не удалось получить пользователя {email}", nameof(GetUserByEmailAsync), email);
-            return new ResponseModelCore 
+            return new ResponseModelCore<UserIdentityCoreModel> 
             {
                 Header = new()
                 {
