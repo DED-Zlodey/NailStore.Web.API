@@ -95,7 +95,7 @@ namespace NailStore.Web.API.Controllers
                     );
                 }
 
-                return Ok(result.Body.Message);
+                return Ok(result.Result);
             }
 
             return Problem
@@ -119,7 +119,7 @@ namespace NailStore.Web.API.Controllers
             int pageSize)
         {
             var result = await _providerService.GetServicesByCategoryAsync(categoryId, pageNumber, pageSize);
-            return Ok(result.Body.GetServices);
+            return Ok(result.Result);
         }
 
         /// <summary>
@@ -165,7 +165,7 @@ namespace NailStore.Web.API.Controllers
             }
 
             // Если все операции прошли успешно, возвращается список услуг
-            return Ok(result.Body.GetServices);
+            return Ok(result.Result);
         }
         
         /// <summary>
@@ -196,7 +196,7 @@ namespace NailStore.Web.API.Controllers
                 if (result.Header.StatusCode == 200)
                 {
                     // Если услуга успешно удалена, возвращается сообщение об успехе
-                    return Ok(result.Body.Message);
+                    return Ok(result.Result);
                 }
 
                 // Если при вызове сервиса возникли ошибки, возвращается ошибка с описанием причины

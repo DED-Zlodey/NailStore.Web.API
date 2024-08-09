@@ -1,4 +1,5 @@
 ﻿using NailStore.Core.Models;
+using NailStore.Core.Models.ResponseModels.Services;
 
 namespace NailStore.Core.Interfaces;
 
@@ -17,7 +18,7 @@ public interface IProviderService<T>
     /// <param name="price">Стоимость услуги</param>
     /// <param name="durationTime">Длительность процедуры</param>
     /// <returns>Вернет объект ответа</returns>
-    Task<ResponseModelCore> AddServiceAsync(T userId, int categoryId, string serviceName, string[] descs, decimal price, short durationTime);
+    Task<ResponseModelCore<string>> AddServiceAsync(T userId, int categoryId, string serviceName, string[] descs, decimal price, short durationTime);
 
     /// <summary>
     /// Получить все услуги для категории по ее идентификатору
@@ -26,14 +27,14 @@ public interface IProviderService<T>
     /// <param name="pageNumber">Номер запрашиваемой страницы</param>
     /// <param name="pageSize">Количество записей на страницу</param>
     /// <returns></returns>
-    Task<ResponseModelCore> GetServicesByCategoryAsync(int categoryId, int pageNumber, int pageSize);
+    Task<ResponseModelCore<ResponseGetServiceModelCore>> GetServicesByCategoryAsync(int categoryId, int pageNumber, int pageSize);
     /// <summary>
     /// Удаление услуги по ее идентификатору
     /// </summary>
     /// <param name="serviceId">Идентификатор услуги</param>
     /// <param name="userId">Идентификатор пользователя</param>
     /// <returns></returns>
-    Task<ResponseModelCore> RemoveServiceAsync(int serviceId, T userId);
+    Task<ResponseModelCore<string>> RemoveServiceAsync(int serviceId, T userId);
 
     /// <summary>
     /// Получает все услуги, принадлежащие определенному пользователю, с поддержкой пагинации.
@@ -46,5 +47,5 @@ public interface IProviderService<T>
     /// - <see cref="ResponseModelCore.Header"/>: Содержит код состояния HTTP и сообщение об ошибке, если таковое имеется.
     /// - <see cref="ResponseModelCore.Body"/>: Содержит полученные услуги и информацию о пагинации.
     /// </returns>
-    Task<ResponseModelCore> GetAllServicesByUserIdAsync(T userId, int pageNumber, int pageSize);
+    Task<ResponseModelCore<ResponseGetServiceModelCore>> GetAllServicesByUserIdAsync(T userId, int pageNumber, int pageSize);
 }

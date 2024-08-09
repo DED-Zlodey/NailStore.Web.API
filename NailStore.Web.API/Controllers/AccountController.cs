@@ -15,6 +15,7 @@ public class AccountController : ControllerBase
     {
         _userService = userService;
     }
+
     /// <summary>
     /// Регистрация пользователя
     /// </summary>
@@ -25,9 +26,7 @@ public class AccountController : ControllerBase
     ///        "Password" : "Пароль пользователя"
     ///     }
     /// </remarks>
-    /// <param name="UserName">Никнейм пользователя</param>
-    /// <param name="Email">Email пользователя</param>
-    /// <param name="Password">Пароль пользователя</param>
+    /// <param name="model">Модель регистрации пользователя</param>
     /// <returns></returns>
     [HttpPost("Register")]
     public async Task<ActionResult<string>> PostRegister([FromBody] RequestUser model)
@@ -50,7 +49,7 @@ public class AccountController : ControllerBase
                                instance: HttpContext.Request.Path
                            );
         }
-        return Ok(result.Body.Message);
+        return Ok(result.Result);
     }
     /// <summary>
     /// Аутентификация пользователя
@@ -80,7 +79,7 @@ public class AccountController : ControllerBase
                                instance: HttpContext.Request.Path
                            );
         }
-        return Ok(result.Body.Token);
+        return Ok(result.Result);
     }
     /// <summary>
     /// Подтверждение Email пользователя с помощью которого производилась регистрация
@@ -112,7 +111,7 @@ public class AccountController : ControllerBase
                                instance: HttpContext.Request.Path
                            );
         }
-        return Ok(result.Body.Message);
+        return Ok(result.Result);
     }
     /// <summary>
     /// Проверят свободен ли никнейм пользователя.
@@ -126,6 +125,7 @@ public class AccountController : ControllerBase
     {
         return Ok(await _userService.UserNameIsFreeAsync(username));
     }
+
     /// <summary>
     /// Отправить на почту инструкцию по восстановлению пароля
     /// </summary>
@@ -134,7 +134,7 @@ public class AccountController : ControllerBase
     ///        "Email" : "Email пользователя"
     ///     }
     /// </remarks> 
-    /// <param name="email">Email пользователя</param>
+    /// <param name="model">Модель отправки запроса на восстановление пароля</param>
     /// <returns></returns>
     [HttpPost]
     [Route("SendRecoverPassword")]
@@ -145,7 +145,7 @@ public class AccountController : ControllerBase
             model.Url = $"{Request.Scheme}://{Request.Host}/api/Account/ConfirmEmail/";
         }
         var result = await _userService.RecoveryPasswordSend(model.Email, model.Url);
-        return Ok(result.Body.Message);
+        return Ok(result.Result);
     }
     /// <summary>
     /// Изменить пароль на новый
@@ -173,7 +173,7 @@ public class AccountController : ControllerBase
                                instance: HttpContext.Request.Path
                            );
         }
-        return Ok(result.Body.Message);
+        return Ok(result.Result);
     }
 
 }

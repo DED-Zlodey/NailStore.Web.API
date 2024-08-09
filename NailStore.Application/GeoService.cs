@@ -65,9 +65,9 @@ public class GeoService : IGeoService
     /// Возвращает объект ResponseModelCore, который содержит заголовок ответа с кодом статуса и сообщением об ошибке (если таковые имеются).
     /// Если все геолокации успешно добавлены, то код статуса в заголовке ответа будет равен 200, а сообщение об ошибке будет пустым.
     /// </returns>
-    public async Task<ResponseModelCore> AddGeolocationsAsync(List<GeolocationDTO> geolocations)
+    public async Task<ResponseModelCore<string>> AddGeolocationsAsync(List<GeolocationDTO> geolocations)
     {
-        var response = new ResponseModelCore
+        var response = new ResponseModelCore<string>
         {
             Header = new()
             {

@@ -9,19 +9,19 @@ public interface IUserRepository
     /// </summary>
     /// <param name="email">Email пользователя</param>
     /// <returns>Возвращает модель ответа</returns>
-    Task<ResponseModelCore> GetLockOutTimeUser(string email);
+    Task<ResponseModelCore<DateTimeOffset?>> GetLockOutTimeUser(string email);
     /// <summary>
     /// Получить пользователя по его идентификатору
     /// </summary>
     /// <param name="id">Идентификатор пользователя</param>
     /// <returns>Возвращает модель ответа</returns>
-    Task<ResponseModelCore> GetUserByIdAsync(Guid id);
+    Task<ResponseModelCore<UserIdentityCoreModel>> GetUserByIdAsync(Guid id);
     /// <summary>
     /// Получить пользователя по его Email
     /// </summary>
     /// <param name="email">Email пользователя</param>
     /// <returns>Возвращает модель ответа</returns>
-    Task<ResponseModelCore> GetUserByEmailAsync(string email);
+    Task<ResponseModelCore<UserIdentityCoreModel>> GetUserByEmailAsync(string email);
     /// <summary>
     /// Проверяет свободно ли имя пользователя
     /// </summary>

@@ -108,19 +108,16 @@ public class GeoRepository : IGeoRepository
     /// <returns>
     /// Возвращает строку с сообщением "Локации успешно добавлены", если все геолокации успешно добавлены в базу.
     /// </returns>
-    public async Task<ResponseModelCore> AddGeolocationsAsync(List<GeolocationDTO> geolocations)
+    public async Task<ResponseModelCore<string>> AddGeolocationsAsync(List<GeolocationDTO> geolocations)
     {
-        var response = new ResponseModelCore
+        var response = new ResponseModelCore<string>
         {
             Header = new()
             {
                 StatusCode = 200,
                 Error = string.Empty,
             },
-            Body = new ()
-            {
-                Message = "Локации успешно добавлены",
-            }
+            Result = "Локации успешно добавлены"
         };
         foreach (var item in geolocations)
         {

@@ -34,18 +34,19 @@ public class ServiceRepository : IServiceRepository<Guid>
     /// <param name="price">Стоимость услуги</param>
     /// <param name="durationTime">Длительность процедуры</param>
     /// <returns>Вернет объект ответа</returns>
-    public async Task<ResponseModelCore> AddServiceAsync(Guid userId, int categoryId, string serviceName,
+    public async Task<ResponseModelCore<string>> AddServiceAsync(Guid userId, int categoryId, string serviceName,
         string[] descs, decimal price, short durationTime)
     {
         if (price < 0)
         {
-            return new ResponseModelCore
+            return new ResponseModelCore<string>
             {
                 Header = new()
                 {
                     Error = "Стоимость услуги не может быть отрицательной",
                     StatusCode = 400
-                }
+                },
+                Result = "Стоимость услуги не может быть отрицательной",
             };
         }
 
@@ -58,13 +59,14 @@ public class ServiceRepository : IServiceRepository<Guid>
             if (category == null)
             {
                 _logger.LogError("{method} Категория c Id:{id} не найдена.", nameof(AddServiceAsync), categoryId);
-                return new ResponseModelCore
+                return new ResponseModelCore<string>
                 {
                     Header = new()
                     {
                         Error = "Категория не найдена",
                         StatusCode = 404
-                    }
+                    },
+                    Result = "Категория не найдена",
                 };
             }
 
@@ -95,10 +97,7 @@ public class ServiceRepository : IServiceRepository<Guid>
                 {
                     StatusCode = 200
                 },
-                Body = new()
-                {
-                    Message = "Услуга успешно добавлена"
-                }
+                Result =  "Услуга успешно добавлена"
             };
         }
         catch (Exception ex)
@@ -111,7 +110,8 @@ public class ServiceRepository : IServiceRepository<Guid>
                 {
                     StatusCode = 500,
                     Error = "Не удалось добавить услугу. Что-то пошло не так :("
-                }
+                },
+                Result = "Не удалось добавить услугу. Что-то пошло не так :(",
             };
         }
     }
@@ -123,10 +123,10 @@ public class ServiceRepository : IServiceRepository<Guid>
     /// <param name="pageNumber">Номер запрашиваемой страницы</param>
     /// <param name="pageSize">Количество записей на страницу</param>
     /// <returns></returns>
-    public async Task<ResponseModelCore> GetServicesByCategoryAsync(int categoryId, int pageNumber, int pageSize)
+    public async Task<ResponseModelCore<ResponseGetServiceModelCore>> GetServicesByCategoryAsync(int categoryId, int pageNumber, int pageSize)
     {
         var test = await _context.Cities.Where(x => x.RegionId == 2).ToListAsync();
-        var response = new ResponseModelCore
+        var response = new ResponseModelCore<ResponseGetServiceModelCore>
         {
             Header = new()
             {
@@ -159,13 +159,10 @@ public class ServiceRepository : IServiceRepository<Guid>
         var countServices = await services.CountAsync();
         var resultServices = await services.OrderBy(x => x.ServiceId).Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .AsNoTracking().ToListAsync();
-        response.Body = new()
+        response.Result = new()
         {
-            GetServices = new()
-            {
-                PageInfo = new ResponsePageInfoModelCore(countServices, pageNumber, pageSize),
-                Services = resultServices
-            }
+            PageInfo = new ResponsePageInfoModelCore(countServices, pageNumber, pageSize),
+            Services = resultServices
         };
         response.Header.StatusCode = 200;
         response.Header.Error = string.Empty;
@@ -183,9 +180,9 @@ public class ServiceRepository : IServiceRepository<Guid>
     /// - <see cref="ResponseModelCore.Header"/>: Содержит код состояния HTTP и сообщение об ошибке, если таковое имеется.
     /// - <see cref="ResponseModelCore.Body"/>: Содержит полученные услуги и информацию о пагинации.
     /// </returns>
-    public async Task<ResponseModelCore> GetAllServicesByUserIdAsync(Guid userId, int pageNumber, int pageSize)
+    public async Task<ResponseModelCore<ResponseGetServiceModelCore>> GetAllServicesByUserIdAsync(Guid userId, int pageNumber, int pageSize)
     {
-        var response = new ResponseModelCore
+        var response = new ResponseModelCore<ResponseGetServiceModelCore>
         {
             Header = new()
             {
@@ -218,13 +215,10 @@ public class ServiceRepository : IServiceRepository<Guid>
         var countServices = await services.CountAsync();
         var resultServices = await services.OrderBy(x => x.ServiceId).Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .AsNoTracking().ToListAsync();
-        response.Body = new()
+        response.Result = new()
         {
-            GetServices = new()
-            {
-                PageInfo = new ResponsePageInfoModelCore(countServices, pageNumber, pageSize),
-                Services = resultServices
-            }
+            PageInfo = new ResponsePageInfoModelCore(countServices, pageNumber, pageSize),
+            Services = resultServices
         };
         response.Header.StatusCode = 200;
         response.Header.Error = string.Empty;
@@ -238,7 +232,7 @@ public class ServiceRepository : IServiceRepository<Guid>
     /// <param name="serviceId">Идентификатор услуги</param>
     /// <param name="userId">Идентификатор пользователя</param>
     /// <returns></returns>
-    public async Task<ResponseModelCore> RemoveServiceAsync(int serviceId, Guid userId)
+    public async Task<ResponseModelCore<string>> RemoveServiceAsync(int serviceId, Guid userId)
     {
         var service = await _context.Services.FirstOrDefaultAsync(x => x.ServiceId == serviceId && x.UserId == userId);
         if (service != null)
@@ -251,10 +245,7 @@ public class ServiceRepository : IServiceRepository<Guid>
                 {
                     StatusCode = 200,
                 },
-                Body = new()
-                {
-                    Message = "Услуга успешно удалена"
-                }
+                Result =  "Услуга успешно удалена"
             };
         }
 
@@ -264,7 +255,8 @@ public class ServiceRepository : IServiceRepository<Guid>
             {
                 StatusCode = 404,
                 Error = "Не удалось удалить услугу. Услуга не найдена или не принадлежит пользователю"
-            }
+            },
+            Result = "Не удалось удалить услугу. Услуга не найдена или не принадлежит пользователю"
         };
     }
 
