@@ -124,6 +124,7 @@ public class JWTManager : IJWTManager
         {
             return new ClaimsIdentity(claims, "Token");
         }
+        claims.Add(new Claim("Name", user.UserName!));
         var userRoles = await _userManager.GetRolesAsync(user);
         foreach (var role in userRoles)
         {

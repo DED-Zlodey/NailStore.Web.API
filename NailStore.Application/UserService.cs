@@ -6,6 +6,7 @@ using NailStore.Core.Models;
 using NailStore.Data.Models;
 using System.Runtime.InteropServices;
 using System.Text;
+using NailStore.Core.Models.ResponseModels.Account;
 
 namespace NailStore.Application;
 
@@ -68,7 +69,7 @@ public class UserService : IUserService
         else
         {
             var errorStr = GetIdentityErrorString(result.Errors.ToList());
-            _logger.LogError("{method} Не удалось сменить пароль для акканта {accont}. Reason: {reason}",
+            _logger.LogError("{method} Не удалось подтвердить Email: {email} пользователя. Reason: {reason}",
                 nameof(ConfirmedEmailUser), user.Email, errorStr);
             return new ResponseModelCore<string>
             {
@@ -115,7 +116,7 @@ public class UserService : IUserService
     /// Возвращает объект ответа, содержащий токен доступа в случае успешного входа.
     /// Если вход не удачен, возвращает соответствующее сообщение об ошибке.
     /// </returns>
-    public async Task<ResponseModelCore<string>> LoginUserAsync(string email, string password)
+    public async Task<ResponseModelCore<ResponseUserModelCore>> LoginUserAsync(string email, string password)
     {
         var user = await _userManager.FindByEmailAsync(email);
         if (user != null)
@@ -124,14 +125,19 @@ public class UserService : IUserService
             if (result.Succeeded)
             {
                 var token = await _jwtManager.GetBearerTokenAsync(user.Id.ToString());
-                return new ResponseModelCore<string>
+                return new ResponseModelCore<ResponseUserModelCore>
                 {
                     Header = new()
                     {
                         Error = string.Empty,
                         StatusCode = 200,
                     },
-                    Result = token
+                    Result = new ()
+                    {
+                        UserName = user.UserName!,
+                        UserId = user.Id.ToString(),
+                        Token = token,
+                    }
                 };
             }
             else
@@ -141,7 +147,7 @@ public class UserService : IUserService
                     var lockoutEndDate = _userManager.GetLockoutEndDateAsync(user);
                     if (lockoutEndDate.IsCompletedSuccessfully)
                     {
-                        var responseModel = new ResponseModelCore<string>
+                        var responseModel = new ResponseModelCore<ResponseUserModelCore>
                         {
                             Header = new()
                             {
@@ -149,42 +155,38 @@ public class UserService : IUserService
                                     $"Из-за превышения неудачных попыток входа, пользователь заблокирован до {lockoutEndDate.Result!.Value.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss")} UTC+8",
                                 StatusCode = 403,
                             },
-                            Result = $"Из-за превышения неудачных попыток входа, пользователь заблокирован до {lockoutEndDate.Result!.Value.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss")} UTC+8",
                         };
                         return responseModel;
                     }
-                    return new ResponseModelCore<string>
+                    return new ResponseModelCore<ResponseUserModelCore>
                     {
                         Header = new()
                         {
                             Error = "Доступ запрещен",
                             StatusCode = 403,
                         },
-                        Result = "Доступ запрещен"
                     };
                 }
 
-                return new ResponseModelCore<string>
+                return new ResponseModelCore<ResponseUserModelCore>
                 {
                     Header = new()
                     {
                         Error = $"Email {email} или пароль пользователя не верный",
                         StatusCode = 403
                     },
-                    Result = $"Email {email} или пароль пользователя не верный"
                 };
             }
         }
         else
         {
-            return new ResponseModelCore<string>
+            return new ResponseModelCore<ResponseUserModelCore>
             {
                 Header = new()
                 {
                     Error = $"Email {email} или пароль пользователя не верный",
                     StatusCode = 403
                 },
-                Result = $"Email {email} или пароль пользователя не верный"
             };
         }
     }
@@ -392,7 +394,7 @@ public class UserService : IUserService
         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
         var urlCallback = $"{url}{user.Id}/{code}";
         var resultSendEmail = await _emailService.SendEmailAsync(user.Email!, "Восстановление пароля",
-            "Подтвердите вашу учетную запись, кликнув <a href=\"" + urlCallback + "\">здесь</a>");
+            "Перейдите по ссылке:<a href=\"" + urlCallback + "\">Ссылка</a> для восстановления пароля.");
         if (resultSendEmail.IsSending)
         {
             return new ResponseModelCore<string>
@@ -526,7 +528,7 @@ public class UserService : IUserService
     /// <summary>
     /// Получить роли пользователя
     /// </summary>
-    /// <param name="userId">Идентификтор пользователя</param>
+    /// <param name="userId">Идентификатор пользователя</param>
     /// <returns>Верент список ролей пользователя</returns>
     public async Task<string[]> GetUserRolesAsync(string userId)
     {

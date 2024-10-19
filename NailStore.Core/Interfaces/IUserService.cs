@@ -1,4 +1,5 @@
 ﻿using NailStore.Core.Models;
+using NailStore.Core.Models.ResponseModels.Account;
 
 namespace NailStore.Core.Interfaces;
 
@@ -19,7 +20,7 @@ public interface IUserService
     /// <param name="email">Email пользователя</param>
     /// <param name="password">Пароль пользователя</param>
     /// <returns>Возвращает объект ответа</returns>
-    Task<ResponseModelCore<string>> LoginUserAsync(string email, string password);
+    Task<ResponseModelCore<ResponseUserModelCore>> LoginUserAsync(string email, string password);
     /// <summary>
     /// Получить пользователя по его идентификатору
     /// </summary>

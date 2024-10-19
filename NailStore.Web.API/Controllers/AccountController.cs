@@ -5,17 +5,26 @@ using NailStore.Web.API.DTOs.Account;
 
 namespace NailStore.Web.API.Controllers;
 
+/// <summary>
+/// Контроллер для работы с пользователями
+/// </summary>
 [Route("api/[controller]")]
 [Produces("application/json")]
 [ApiController]
 public class AccountController : ControllerBase
 {
+    /// <summary>
+    /// Сервис для работы с пользователями
+    /// </summary>
     private readonly IUserService _userService;
+    /// <summary>
+    /// Контроллер AccountController. Обрабатывает запросы пользователей, связанные с аутентификацией, регистрацией и восстановлением пароля.
+    /// </summary>
+    /// <param name="userService">Сервис для работы с пользователями.</param>
     public AccountController(IUserService userService)
     {
         _userService = userService;
     }
-
     /// <summary>
     /// Регистрация пользователя
     /// </summary>
@@ -67,7 +76,12 @@ public class AccountController : ControllerBase
     {
         if (string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.Password))
         {
-            return ValidationProblem("Одно или несколько обязательных полей не заполнены");
+            return Problem
+            (
+                detail: "Одно или несколько обязательных полей не заполнены",
+                statusCode: StatusCodes.Status400BadRequest,
+                instance: HttpContext.Request.Path
+            );
         }
         var result = await _userService.LoginUserAsync(model.Email, model.Password);
         if (result.Header.StatusCode != 200)
