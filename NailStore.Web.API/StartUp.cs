@@ -13,7 +13,7 @@ public class StartUp
     /// <summary>
     /// Предоставляет конфигурацию приложения.
     /// </summary>
-    public IConfiguration Configuration { get; }
+    private IConfiguration Configuration { get; }
 
     /// <summary>
     /// Инициализирует новый экземпляр класса StartUp.
